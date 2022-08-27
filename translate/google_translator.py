@@ -21,8 +21,21 @@ def translate(input: str, lan_to: str, lan_from: str = 'auto') -> str:
         },
         data=f'f.req=[[["MkEWBc","[[\\"{input}\\",\\"{lan_from}\\",\\"{lan_to}\\",true],[null]]",null,"generic"]]]'
     ).text
-    res = res[res.index(start_pattern) + len(start_pattern):]
+    res = res.replace(input, "", -1)
     res = res[res.index(start_pattern) + len(start_pattern):]
     res = res[:res.index(stop_pattern)]
     res = res.replace("\\\\\\\"", "\"", -1)
     return res
+
+def test():
+    """Test"""
+    import json
+    dataset = json.load(open("../dataset.json", "r"))
+    token = "[*]"
+    for iter in range((len(dataset) // 40)):
+        unique_sentence = ""
+        for i in range(40):
+            unique_sentence += list(dataset.keys())[iter + i] + token
+        res = translate(unique_sentence, lan_to="it", lan_from="en")
+        for i, trg in enumerate(res.split(token)[:-1]):
+            print(list(dataset.keys())[iter + i], "\t=>\t", trg)
