@@ -1,6 +1,6 @@
 from typing import List, Tuple
 import torch
-import torch.nn
+from torch import nn
 from transformers import AutoTokenizer
 from torchtext.data.metrics import bleu_score
 
