@@ -1,5 +1,5 @@
 import torch
-import nn.torch
+import torch.nn
 
 
 class MultiHeadAttentionLayer(nn.Module):

@@ -1,5 +1,5 @@
 import torch
-import nn.torch
+import torch.nn
 from layers.encoder_layer import EncoderLayer
 
 class Encoder(nn.Module):

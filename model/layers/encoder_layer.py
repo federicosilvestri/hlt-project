@@ -1,5 +1,5 @@
 import torch
-import nn.torch
+import torch.nn
 from multihead_attention_layer import MultiHeadAttentionLayer
 from feedforward_layer import FeedforwardLayer
 
