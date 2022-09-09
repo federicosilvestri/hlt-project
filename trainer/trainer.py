@@ -62,7 +62,7 @@ class Trainer:
             minibatch_tr.append((torch.cat(src, 0), torch.cat(trg, 0)))
         return minibatch_tr
 
-    def __train(self, train_set: List[Tuple[torch.tensor, torch.tensor]]) -> float:
+    def train(self, train_set: List[Tuple[torch.tensor, torch.tensor]]) -> float:
         """Method used to train one single epoch.
 
         Args:
@@ -90,7 +90,7 @@ class Trainer:
             epoch_loss += loss.item()
         return epoch_loss / len(train_set)
 
-    def __evaluate(self, val_set: List[Tuple[torch.tensor, torch.tensor]]) -> float:
+    def evaluate(self, val_set: List[Tuple[torch.tensor, torch.tensor]]) -> float:
         """Method used to evaluate one single epoch.
 
           Args:
@@ -132,8 +132,8 @@ class Trainer:
             start_time = time.time()
             random.shuffle(train_set)
             mb_train_set = self.__create_batches(train_set)
-            train_loss = self.__train(mb_train_set)
-            valid_loss = self.__evaluate(val_set)
+            train_loss = self.train(mb_train_set)
+            valid_loss = self.evaluate(val_set)
             end_time = time.time()
             epoch_mins, epoch_secs = self.__epoch_time(start_time, end_time)
             if verbose:
