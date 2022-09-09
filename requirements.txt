@@ -16,7 +16,7 @@ tokenizers==0.12.1
 torch==1.12.1
 torchtext==0.13.1
 tqdm==4.64.1
-transformers==4.21.3
+transformers[sentencepiece]==4.21.3
 typing_extensions==4.3.0
 urllib3==1.26.12
 wget==3.2
