@@ -1,3 +1,4 @@
+from pathlib import Path
 import torch
 from torch import nn
 
@@ -8,7 +9,10 @@ class Transformer(nn.Module):
                  decoder,
                  src_pad_idx,
                  trg_pad_idx,
-                 device):
+                 device,
+                 model_dir: Path,
+                 model_file_name: str
+                 ):
         super().__init__()
 
         self.encoder = encoder
@@ -16,6 +20,8 @@ class Transformer(nn.Module):
         self.src_pad_idx = src_pad_idx
         self.trg_pad_idx = trg_pad_idx
         self.device = device
+        self.model_dir = model_dir
+        self.model_file_name = model_file_name
 
     def make_src_mask(self, src):
         # src = [batch size, src len]
@@ -48,3 +54,8 @@ class Transformer(nn.Module):
         # output = [batch size, trg len, output dim]
         # attention = [batch size, n heads, trg len, src len]
         return output, attention
+
+    def save_transformer(self):
+        if not self.model_dir.exists():
+            self.model_dir.mkdir()
+        torch.save(self, self.model_dir / self.model_file_name)

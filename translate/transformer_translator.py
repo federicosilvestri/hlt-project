@@ -15,6 +15,7 @@ class TransformerTranslator:
         tokenizer_encoder: AutoTokenizer,
         tokenizer_decoder: AutoTokenizer,
         max_length: int = 100,
+        device: str = 'cpu'
     ) -> None:
         """TransformerTranslator constructor.
 
@@ -23,12 +24,13 @@ class TransformerTranslator:
             tokenizer_encoder (AutoTokenizer): Encoder tokenizer.
             tokenizer_decoder (AutoTokenizer): Decoder tokenizer.
             max_length (int, optional): Max number of tokens of a translated sentence.
+            device (str, optional): Accelerator used to translate data.
         """
         self.model = model
         self.tokenizer_encoder = tokenizer_encoder
         self.tokenizer_decoder = tokenizer_decoder
         self.max_length = max_length
-        self.device = search_strategy()
+        self.device = device
 
     def __call__(self, src_sentence: str) -> str:
         """Method able to translate a given sentence.
@@ -90,4 +92,4 @@ class TransformerTranslator:
             pred_trg = self.__call__(src)
             pred_trg_tokens = self.tokenizer_decoder.tokenize(pred_trg)
             pred_trgs.append(pred_trg_tokens)
-        return bleu_score(pred_trgs, trgs) * 100
+        return bleu_score(pred_trgs, trgs)

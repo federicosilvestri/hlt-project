@@ -27,8 +27,8 @@ class Preprocessor:
             langs_index[lang] = self._tokenizer_.get_added_vocab()[f"[2{lang}]"]
         self._tokenizer_.add_special_tokens({"pad_token": "[PAD]"})
         self._pad_index_ = self._tokenizer_.vocab["[PAD]"]
-        self.train_data = None
-        self.val_data = None
+        self.trainable_data = None
+        self.zeroshot_data = None
 
     def _preprocessing_(self, train_strings):
         train_data = []
@@ -75,7 +75,7 @@ class Preprocessor:
         return train_data
 
     def execute(self):
-        self.train_data = self._wrap_preprocessing_by_lang_(
+        self.trainable_data = self._wrap_preprocessing_by_lang_(
             [
                 ("en", "fr"),
                 ("en", "de"),
@@ -85,4 +85,4 @@ class Preprocessor:
                 ("es", "it"),
             ]
         )
-        self.val_data = self._wrap_preprocessing_by_lang_([("en", "it")])
+        self.zeroshot_data = self._wrap_preprocessing_by_lang_([("en", "it")])

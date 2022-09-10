@@ -14,7 +14,7 @@ regex==2022.8.17
 six==1.16.0
 tokenizers==0.12.1
 torch==1.12.1
-torchtext==0.13.1
+torchtext==0.6.0
 tqdm==4.64.1
 transformers[sentencepiece]==4.21.3
 typing_extensions==4.3.0

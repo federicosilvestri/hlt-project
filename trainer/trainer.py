@@ -90,19 +90,19 @@ class Trainer:
             epoch_loss += loss.item()
         return epoch_loss / len(train_set)
 
-    def evaluate(self, val_set: List[Tuple[torch.tensor, torch.tensor]]) -> float:
+    def evaluate(self, test_set: List[Tuple[torch.tensor, torch.tensor]]) -> float:
         """Method used to evaluate one single epoch.
 
           Args:
-              val_set (List[Tuple[torch.tensor, torch.tensor]])): Validation set.
+              test_set (List[Tuple[torch.tensor, torch.tensor]])): Test set.
 
           Return:
-              float: Validation loss related to the current epoch.
+              float: Test loss related to the current epoch.
         """
         self.model.eval()
         epoch_loss = 0
         with torch.no_grad():
-            for src, trg in val_set:
+            for src, trg in test_set:
                 output, _ = self.model(src, trg[:, :-1])
                 # output = [batch size, trg len - 1, output dim]
                 # trg = [batch size, trg len]
@@ -113,16 +113,18 @@ class Trainer:
                 # trg = [batch size * trg len - 1]
                 loss = self.criterion(output, trg)
                 epoch_loss += loss.item()
-        return epoch_loss / len(val_set)
+        return epoch_loss / len(test_set)
 
     def __call__(self, train_set: List[Tuple[torch.tensor, torch.tensor]],
-                 val_set: List[Tuple[torch.tensor, torch.tensor]],
+                 test_set: List[Tuple[torch.tensor, torch.tensor]],
+                 zero_shot_test: List[Tuple[torch.tensor, torch.tensor]] = None,
                  epochs: int = 10, callbacks: List[Callable] = [], verbose: bool = True) -> None:
         """Main method of the class able to train the model.
 
         Args:
             train_set (List[Tuple[torch.tensor, torch.tensor]])): Training set.
-            val_set (List[Tuple[torch.tensor, torch.tensor]])): Validation set.
+            test_set (List[Tuple[torch.tensor, torch.tensor]])): Test set.
+            zero_shot_test (List[Tuple[torch.tensor, torch.tensor]])): Zero shot test set.
             epochs (int, optional): Number of time that the train process is repeated.
             callbacks (List[Callable], optional): List of callbacks called after each epoch.
             verbose (bool, optional): Flag that is used to decide to print or not training results on console.
@@ -133,13 +135,15 @@ class Trainer:
             random.shuffle(train_set)
             mb_train_set = self.__create_batches(train_set)
             train_loss = self.train(mb_train_set)
-            valid_loss = self.evaluate(val_set)
+            test_loss = self.evaluate(test_set)
+            zero_shot_loss = self.evaluate(zero_shot_test)
             end_time = time.time()
+            self.model.save_transformer()
             epoch_mins, epoch_secs = self.__epoch_time(start_time, end_time)
             if verbose:
-                print(
-                    f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
-                print(f'\tTrain loss: {train_loss:.3f}')
-                print(f'\tValid loss: {valid_loss:.3f}')
+                print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
+                print(f'\tTrain loss:\t{train_loss:.3f}')
+                print(f'\tTest loss:\t{test_loss:.3f}')
+                print(f'\tZero shot loss:\t{zero_shot_loss:.3f}')
             for callback in callbacks:
-                callback(train_loss, valid_loss, (epoch_mins, epoch_secs))
+                callback(train_loss, test_loss, zero_shot_loss, (epoch_mins, epoch_secs))
