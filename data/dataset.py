@@ -21,5 +21,5 @@ class Dataset:
         return self.__ds__
 
     @property
-    def len(self):
+    def size(self):
         return len(self.__ds__)

@@ -1,10 +1,10 @@
-import logging
 import random
 import typing as tp
 
 from transformers import BertTokenizer
 
 from data import Dataset
+from utils import search_strategy
 
 
 class Preprocessor:
@@ -12,10 +12,10 @@ class Preprocessor:
         self, dataset: Dataset, max_length: int = 100, limit: tp.Optional[int] = None
     ):
         # we need to implement the search strategy
-        self._device_: str = "cpu"
+        self._device_: str = search_strategy()
         self._dataset_ = dataset
         self._max_length_: int = max_length
-        self._limit_ = limit if limit is not None else dataset.len
+        self._limit_ = limit if limit is not None else dataset.size
         self._tokenizer_ = BertTokenizer.from_pretrained(
             "bert-base-multilingual-uncased"
         )
@@ -27,6 +27,8 @@ class Preprocessor:
             langs_index[lang] = self._tokenizer_.get_added_vocab()[f"[2{lang}]"]
         self._tokenizer_.add_special_tokens({"pad_token": "[PAD]"})
         self._pad_index_ = self._tokenizer_.vocab["[PAD]"]
+        self.train_data = None
+        self.val_data = None
 
     def _preprocessing_(self, train_strings):
         train_data = []
@@ -73,7 +75,7 @@ class Preprocessor:
         return train_data
 
     def execute(self):
-        train_data = self._wrap_preprocessing_by_lang_(
+        self.train_data = self._wrap_preprocessing_by_lang_(
             [
                 ("en", "fr"),
                 ("en", "de"),
@@ -83,7 +85,4 @@ class Preprocessor:
                 ("es", "it"),
             ]
         )
-
-        val_data = self._wrap_preprocessing_by_lang_([("en", "it")])
-
-        logging.info(f"Train data: {len(train_data)}, Validation Data: {len(val_data)}")
+        self.val_data = self._wrap_preprocessing_by_lang_([("en", "it")])

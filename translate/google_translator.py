@@ -1,6 +1,7 @@
 import requests
 
-def translate(input: str, lan_to: str, lan_from: str = 'auto') -> str:
+
+def translate(input: str, lan_to: str, lan_from: str = "auto") -> str:
     """This function exploits google translate api to translate a sentence from a language to another.
 
     Args:
@@ -11,28 +12,30 @@ def translate(input: str, lan_to: str, lan_from: str = 'auto') -> str:
     Returns:
         str: Target sentence.
     """
-    input = input.replace("\"", "\\\\\\\"", -1)
-    start_pattern = "[[\\\""
-    stop_pattern = "\\\","
+    input = input.replace('"', '\\\\\\"', -1)
+    start_pattern = '[[\\"'
+    stop_pattern = '\\",'
     res = requests.post(
-        "https://translate.google.it/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&source-path=%2F&f.sid=6697384723060200247&bl=boq_translate-webserver_20220824.02_p0&hl=it&soc-app=1&soc-platform=1&soc-device=1&_reqid=2301709&rt=c",
-        headers={
-            "content-type": "application/x-www-form-urlencoded;charset=UTF-8"
-        },
-        data=f'f.req=[[["MkEWBc","[[\\"{input}\\",\\"{lan_from}\\",\\"{lan_to}\\",true],[null]]",null,"generic"]]]'
+        "https://translate.google.it/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&source"
+        "-path=%2F&f.sid=6697384723060200247&bl=boq_translate-webserver_20220824.02_p0&hl=it&soc-app"
+        "=1&soc-platform=1&soc-device=1&_reqid=2301709&rt=c",
+        headers={"content-type": "application/x-www-form-urlencoded;charset=UTF-8"},
+        data=f'f.req=[[["MkEWBc","[[\\"{input}\\",\\"{lan_from}\\",\\"{lan_to}\\",true],[null]]",null,"generic"]]]',
     ).text
     res = res.replace(input, "", -1)
-    res = res[res.index(start_pattern) + len(start_pattern):]
-    res = res[:res.index(stop_pattern)]
-    res = res.replace("\\\\\\\"", "\"", -1)
+    res = res[(res.index(start_pattern) + len(start_pattern)) :]  # noqa: E203
+    res = res[: res.index(stop_pattern)]
+    res = res.replace('\\\\\\"', '"', -1)
     return res
+
 
 def test():
     """Test"""
     import json
-    dataset = json.load(open("../dataset.json", "r"))
+
+    dataset = json.load(open("../dataset.json"))
     token = "[*]"
-    for iter in range((len(dataset) // 40)):
+    for iter in range(len(dataset) // 40):
         unique_sentence = ""
         for i in range(40):
             unique_sentence += list(dataset.keys())[iter + i] + token

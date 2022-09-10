@@ -3,22 +3,17 @@ from pathlib import Path
 
 import wget
 
-# Parallel dataset built with another repository
-DATASET_URL = "https://github.com/federicosilvestri/hlt-parallel-dataset/blob/master/processed/parallel.json?raw=true"
-DOWNLOAD_DIR = Path(__file__).parent.parent / "dataset"
-FILE_NAME = "dataset.json"
-
 
 class DatasetDownloader:
     """
-    Dataset downloader class that uses wget function to decrease memory utilization.
+    Dataset downloader class that uses `wget` to decrease memory utilization.
     """
 
     def __init__(
         self,
-        url: str = DATASET_URL,
-        download_dir: Path = DOWNLOAD_DIR,
-        file_name: str = FILE_NAME,
+        url: str,
+        download_dir: Path,
+        file_name: str,
     ):
         self.__url__: str = url
         self.__download_dir__: Path = download_dir
