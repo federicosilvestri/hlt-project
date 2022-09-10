@@ -1,3 +1,4 @@
+from typing import List
 import torch
 from torch import nn
 from torchtext.data.metrics import bleu_score
@@ -75,7 +76,7 @@ class TransformerTranslator:
         res_sent = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens)
         return res_sent
 
-    def bleu(self, test_set: list[tuple[str, str]]) -> float:
+    def bleu(self, test_set: List[tuple[str, str]]) -> float:
         """Method used to compute bleu score.
 
         Args:
