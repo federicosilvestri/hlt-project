@@ -11,6 +11,7 @@ from data import Dataset, DatasetDownloader
 from preprocessing import Preprocessor, PreprocessSerializer
 from utils.plot_handler import PlotHandler
 
+
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 
@@ -37,6 +38,8 @@ if not dataset_downloader.already_downloaded():
 #
 logging.info("Loading dataset")
 dataset = Dataset(dataset_downloader.downloaded_file)
+
+# dataset.__ds__ = { k: v for k, v in list(dataset.data.items())[:100] } # TODO make dataset short
 
 #
 # Execute preprocessing
@@ -113,19 +116,22 @@ logging.info("End model training")
 plot_handler.save_plot()
 
 #
-# BLEU score calculation and translation
+# BLEU score calculation, sacreBLEU score calculation and translation
 #
-ZERO_SHOT_SET = [(key, value['it']) for key, value in list(dataset.data.items())]
+ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.data.items())]
 translator = TransformerTranslator(model, preprocessor._tokenizer_, preprocessor._tokenizer_, MAX_LENGTH, DEVICE)
 
 logging.info("BLEU score computation")
 bleu_score_zero_shot = translator.bleu(ZERO_SHOT_SET)
 print(f'BLEU score zero shot = {bleu_score_zero_shot*100:.2f}%')
 
+logging.info("sacreBLEU score computation")
+sacre_bleu_score_zero_shot = translator.sacre_bleu(ZERO_SHOT_SET)
+print(f'sacreBLEU score zero shot = {sacre_bleu_score_zero_shot*100:.2f}%')
+
 logging.info("Printing first 5 sentance translation in zero-shot way")
 for key, value in ZERO_SHOT_SET[:5]:
-    trg = 'it'
-    pred = translator(f'[2{trg}] {key}')
+    pred = translator(key)
     print(f'SRC: {key}')
     print(f'OUT: {value}')
     print(f'PRED: {pred}')

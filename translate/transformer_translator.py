@@ -2,6 +2,7 @@ from typing import List, Tuple
 import torch
 from torch import nn
 from torchtext.data.metrics import bleu_score
+from torchmetrics import SacreBLEUScore
 from transformers import AutoTokenizer
 
 from utils import search_strategy
@@ -94,3 +95,21 @@ class TransformerTranslator:
             pred_trg_tokens = self.tokenizer_decoder.tokenize(pred_trg)
             pred_trgs.append(pred_trg_tokens)
         return bleu_score(pred_trgs, trgs)
+
+    def sacre_bleu(self, test_set: List[Tuple[str, str]]) -> float:
+        """Method used to compute sacre bleu score.
+
+        Args:
+            test_set (List[Tuple[torch.tensor, torch.tensor]]): Test set.
+
+        Returns:
+            float: sacre BLEU score.
+        """
+        metric = SacreBLEUScore()
+        trgs = []
+        pred_trgs = []
+        for src, trg in test_set:
+            trgs.append([trg])
+            pred_trg = self.__call__(src)
+            pred_trgs.append(pred_trg)
+        return metric(pred_trgs, trgs)
