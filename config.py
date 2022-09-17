@@ -30,6 +30,7 @@ torch.backends.cudnn.deterministic = True
 DEVICE = search_strategy()
 
 # Model configuration
+PRETRAINED = False
 HID_DIM = 256
 ENC_LAYERS = 3
 DEC_LAYERS = 3
@@ -45,7 +46,7 @@ MODEL_FILE_NAME = "zero_shot_nmt.torch"
 # Trainer configuration
 HOLDOUT_VALID_FRACTION = 0.1
 BATCH_SIZE = 32
-EPOCHS = 10
+EPOCHS = 1
 
 # Translator configuration
 MAX_LENGTH = 100

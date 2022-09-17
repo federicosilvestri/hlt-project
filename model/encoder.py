@@ -1,3 +1,4 @@
+from model.layers.positional_embeddings import PositionalEmbedding
 import torch
 from torch import nn
 from model.layers.encoder_layer import EncoderLayer
@@ -18,7 +19,7 @@ class Encoder(nn.Module):
         self.device = device
 
         self.tok_embedding = nn.Embedding(input_dim, hid_dim)
-        self.pos_embedding = nn.Embedding(max_length, hid_dim)
+        self.pos_embedding = PositionalEmbedding(max_length, hid_dim, device)
 
         self.layers = nn.ModuleList([EncoderLayer(hid_dim,
                                                   n_heads,
@@ -36,11 +37,9 @@ class Encoder(nn.Module):
         # src_mask = [batch size, 1, 1, src len]
         batch_size = src.shape[0]
         src_len = src.shape[1]
-        pos = torch.arange(0, src_len).unsqueeze(
-            0).repeat(batch_size, 1).to(self.device)
         # pos = [batch size, src len]
         src = self.dropout(
-            (self.tok_embedding(src) * self.scale) + self.pos_embedding(pos))
+            (self.tok_embedding(src) * self.scale) + self.pos_embedding(src_len))
         # src = [batch size, src len, hid dim]
         for layer in self.layers:
             src = layer(src, src_mask)

@@ -1,3 +1,4 @@
+from model.layers.positional_embeddings import PositionalEmbedding
 import torch
 from torch import nn
 from model.layers.decoder_layer import DecoderLayer
@@ -18,7 +19,7 @@ class Decoder(nn.Module):
         self.device = device
 
         self.tok_embedding = nn.Embedding(output_dim, hid_dim)
-        self.pos_embedding = nn.Embedding(max_length, hid_dim)
+        self.pos_embedding = PositionalEmbedding(max_length, hid_dim, device)
 
         self.layers = nn.ModuleList([DecoderLayer(hid_dim,
                                                   n_heads,
@@ -40,11 +41,9 @@ class Decoder(nn.Module):
         # src_mask = [batch size, 1, 1, src len]
         batch_size = trg.shape[0]
         trg_len = trg.shape[1]
-        pos = torch.arange(0, trg_len).unsqueeze(
-            0).repeat(batch_size, 1).to(self.device)
         # pos = [batch size, trg len]
         trg = self.dropout(
-            (self.tok_embedding(trg) * self.scale) + self.pos_embedding(pos))
+            (self.tok_embedding(trg) * self.scale) + self.pos_embedding(trg_len))
         # trg = [batch size, trg len, hid dim]
         for layer in self.layers:
             trg, attention = layer(trg, enc_src, trg_mask, src_mask)

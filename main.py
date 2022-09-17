@@ -1,3 +1,4 @@
+from model.bert_encoder import BERTEncoder
 from translate.transformer_translator import TransformerTranslator
 from trainer.trainer import Trainer
 from model.transformer import Transformer
@@ -79,13 +80,16 @@ TRG_PAD_IDX = preprocessor._pad_index_
 INPUT_DIM = len(preprocessor._tokenizer_)
 OUTPUT_DIM = len(preprocessor._tokenizer_)
 
-enc = Encoder(INPUT_DIM,
-              HID_DIM,
-              ENC_LAYERS,
-              ENC_HEADS,
-              ENC_PF_DIM,
-              ENC_DROPOUT,
-              DEVICE)
+if PRETRAINED:
+    enc = BERTEncoder(HID_DIM, ENC_HEADS, len(preprocessor._tokenizer_), DEVICE)
+else:
+    enc = Encoder(INPUT_DIM,
+            HID_DIM,
+            ENC_LAYERS,
+            ENC_HEADS,
+            ENC_PF_DIM,
+            ENC_DROPOUT,
+            DEVICE)
 
 dec = Decoder(OUTPUT_DIM,
               HID_DIM,
@@ -116,18 +120,11 @@ logging.info("End model training")
 plot_handler.save_plot()
 
 #
-# BLEU score calculation, sacreBLEU score calculation and translation
+# Translation of some sentences
 #
 ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.data.items())]
 translator = TransformerTranslator(model, preprocessor._tokenizer_, preprocessor._tokenizer_, MAX_LENGTH, DEVICE)
 
-logging.info("BLEU score computation")
-bleu_score_zero_shot = translator.bleu(ZERO_SHOT_SET)
-print(f'BLEU score zero shot = {bleu_score_zero_shot*100:.2f}%')
-
-logging.info("sacreBLEU score computation")
-sacre_bleu_score_zero_shot = translator.sacre_bleu(ZERO_SHOT_SET)
-print(f'sacreBLEU score zero shot = {sacre_bleu_score_zero_shot*100:.2f}%')
 
 logging.info("Printing first 5 sentance translation in zero-shot way")
 for key, value in ZERO_SHOT_SET[:5]:
@@ -137,3 +134,17 @@ for key, value in ZERO_SHOT_SET[:5]:
     print(f'PRED: {pred}')
     print()
 
+
+#
+# Evaluation of model using BLEU and sacreBLEU
+#
+logging.info("Translated set creation")
+translated_set = translator.create_translatedset(ZERO_SHOT_SET)
+
+logging.info("BLEU score computation")
+bleu_score_zero_shot = translated_set.bleu()
+print(f'BLEU score zero shot = {bleu_score_zero_shot*100:.2f}%')
+
+logging.info("sacreBLEU score computation")
+sacre_bleu_score_zero_shot = translated_set.sacre_bleu()
+print(f'sacreBLEU score zero shot = {sacre_bleu_score_zero_shot*100:.2f}%')

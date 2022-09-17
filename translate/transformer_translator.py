@@ -8,6 +8,41 @@ from transformers import AutoTokenizer
 from utils import search_strategy
 
 
+class TranslatedSet:
+    """Class able to provide methods to evaluate the goodness of the model on NMT."""
+
+    def __init__(self, trgs: List[str], pred: List[str], trgs_tokens: List[List[str]], pred_tokens: List[List[str]]) -> None:
+        """TranslatedSet constructor.
+
+        Args:
+            trgs (List[str]): Targets.
+            pred (List[str]): Predictions.
+            trgs_tokens (List[List[str]]): Tokens of targets.
+            pred_tokens (List[List[str]]): Tokens of predictions.
+        """
+        self.trgs = trgs
+        self.pred = pred
+        self.trgs_tokens = trgs_tokens
+        self.pred_tokens = pred_tokens
+
+    def bleu(self) -> float:
+        """Method used to compute bleu score.
+
+        Returns:
+            float: BLEU score.
+        """
+        return bleu_score(self.pred_tokens, self.trgs_tokens)
+
+    def sacre_bleu(self) -> float:
+        """Method used to compute sacre bleu score.
+
+        Returns:
+            float: sacre BLEU score.
+        """
+        metric = SacreBLEUScore()
+        return metric(self.pred, self.trgs)
+
+
 class TransformerTranslator:
     """Class able to construct object that translate sentences given a transformer model."""
 
@@ -77,39 +112,23 @@ class TransformerTranslator:
         res_sent = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens)
         return res_sent
 
-    def bleu(self, test_set: List[Tuple[str, str]]) -> float:
-        """Method used to compute bleu score.
+    def create_translatedset(self, test_set: List[Tuple[str, str]]) -> TranslatedSet:
+        """Method able to create a TranslatedSet.
 
         Args:
-            test_set (List[Tuple[torch.tensor, torch.tensor]]): Test set.
+            test_set (List[Tuple[str, str]]): Test set of sentances to create the translated set.
 
-        Returns:
-            float: BLEU score.
+        Return:
+            TranslatedSet: Translated set.
         """
         trgs = []
-        pred_trgs = []
-        for src, trg in test_set:
-            trg_tokens = self.tokenizer_decoder.tokenize(trg)
-            trgs.append([trg_tokens])
-            pred_trg = self.__call__(src)
-            pred_trg_tokens = self.tokenizer_decoder.tokenize(pred_trg)
-            pred_trgs.append(pred_trg_tokens)
-        return bleu_score(pred_trgs, trgs)
-
-    def sacre_bleu(self, test_set: List[Tuple[str, str]]) -> float:
-        """Method used to compute sacre bleu score.
-
-        Args:
-            test_set (List[Tuple[torch.tensor, torch.tensor]]): Test set.
-
-        Returns:
-            float: sacre BLEU score.
-        """
-        metric = SacreBLEUScore()
-        trgs = []
-        pred_trgs = []
+        trgs_tokens = []
+        pred = []
+        pred_tokens = []
         for src, trg in test_set:
             trgs.append([trg])
-            pred_trg = self.__call__(src)
-            pred_trgs.append(pred_trg)
-        return metric(pred_trgs, trgs)
+            trgs_tokens.append([self.tokenizer_decoder.tokenize(trg)])
+            prediction = self.__call__(src)
+            pred.append(prediction)
+            pred_tokens.append(self.tokenizer_decoder.tokenize(prediction))
+        return TranslatedSet(trgs, pred, trgs_tokens, pred_tokens)
