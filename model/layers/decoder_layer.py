@@ -13,23 +13,22 @@ class DecoderLayer(nn.Module):
                  device):
         super().__init__()
 
-        self.self_attn_layer_norm = nn.LayerNorm(hid_dim)
-        self.enc_attn_layer_norm = nn.LayerNorm(hid_dim)
-        self.ff_layer_norm = nn.LayerNorm(hid_dim)
         self.self_attention = MultiHeadAttentionLayer(
             hid_dim, n_heads, dropout, device)
+        self.self_attn_layer_norm = nn.LayerNorm(hid_dim)
         self.encoder_attention = MultiHeadAttentionLayer(
             hid_dim, n_heads, dropout, device)
+        self.enc_attn_layer_norm = nn.LayerNorm(hid_dim)
         self.feedforward = FeedforwardLayer(hid_dim,
                                             pf_dim,
                                             dropout)
+        self.ff_layer_norm = nn.LayerNorm(hid_dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, trg, enc_src, trg_mask, src_mask):
+    def forward(self, trg, enc_src, trg_mask):
         # trg = [batch size, trg len, hid dim]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, 1, trg len, trg len]
-        # src_mask = [batch size, 1, 1, src len]
 
         # self attention
         _trg, _ = self.self_attention(trg, trg, trg, trg_mask)
@@ -40,7 +39,7 @@ class DecoderLayer(nn.Module):
 
         # encoder attention
         _trg, attention = self.encoder_attention(
-            trg, enc_src, enc_src, src_mask)
+            trg, enc_src, enc_src)
 
         # dropout, residual connection and layer norm
         trg = self.enc_attn_layer_norm(trg + self.dropout(_trg))

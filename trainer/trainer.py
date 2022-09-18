@@ -85,7 +85,8 @@ class Trainer:
             # trg = [batch size * trg len - 1]
             loss = self.criterion(output, trg)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip)
+            if self.clip is not None:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clip)
             self.optimizer.step()
             epoch_loss += loss.item()
         return epoch_loss / len(train_set)

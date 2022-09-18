@@ -13,21 +13,20 @@ class EncoderLayer(nn.Module):
                  device):
         super().__init__()
 
-        self.self_attn_layer_norm = nn.LayerNorm(hid_dim)
-        self.ff_layer_norm = nn.LayerNorm(hid_dim)
         self.self_attention = MultiHeadAttentionLayer(
             hid_dim, n_heads, dropout, device)
+        self.self_attn_layer_norm = nn.LayerNorm(hid_dim)
+        self.ff_layer_norm = nn.LayerNorm(hid_dim)
         self.feedforward = FeedforwardLayer(hid_dim,
                                             pf_dim,
                                             dropout)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, src, src_mask):
+    def forward(self, src):
         # src = [batch size, src len, hid dim]
-        # src_mask = [batch size, 1, 1, src len]
 
         # self attention
-        _src, _ = self.self_attention(src, src, src, src_mask)
+        _src, _ = self.self_attention(src, src, src)
 
         # dropout, residual connection and layer norm
         src = self.self_attn_layer_norm(src + self.dropout(_src))
