@@ -1,5 +1,7 @@
 import random
 import typing as tp
+from joblib import Parallel, delayed
+import numpy as np
 
 from transformers import BertTokenizer
 
@@ -63,14 +65,19 @@ class Preprocessor:
     def _wrap_preprocessing_by_lang_(self, langs):
         def replace_lang(lang, k, v):
             return k if lang == "en" else v[lang]
-
-        train_data = []
+        train_strings = []
         for src, trg in langs:
-            train_strings = [
+            train_strings += [
                 (f"[2{trg}] {replace_lang(src, k, v)}", replace_lang(trg, k, v))
                 for k, v in self._dataset_.data.items()
             ][: self._limit_]
-            train_data += self._preprocessing_(train_strings)
+        train_strings = np.array_split(train_strings, 50)
+        train_data = []
+        with Parallel(n_jobs=-1, prefer="processes") as parallel:
+            train_data += parallel(
+                delayed(self._preprocessing_)(train_str)
+                for train_str in train_strings
+            )
         random.shuffle(train_data)
         return train_data
 
