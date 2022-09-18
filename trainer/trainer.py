@@ -118,14 +118,16 @@ class Trainer:
 
     def __call__(self, train_set: List[Tuple[torch.tensor, torch.tensor]],
                  test_set: List[Tuple[torch.tensor, torch.tensor]],
-                 zero_shot_test: List[Tuple[torch.tensor, torch.tensor]] = None,
+                 zero_shot_train_set: List[Tuple[torch.tensor, torch.tensor]],
+                 zero_shot_test_set: List[Tuple[torch.tensor, torch.tensor]],
                  epochs: int = 10, callbacks: List[Callable] = [], verbose: bool = True) -> None:
         """Main method of the class able to train the model.
 
         Args:
             train_set (List[Tuple[torch.tensor, torch.tensor]])): Training set.
             test_set (List[Tuple[torch.tensor, torch.tensor]])): Test set.
-            zero_shot_test (List[Tuple[torch.tensor, torch.tensor]])): Zero shot test set.
+            zero_shot_train_set (List[Tuple[torch.tensor, torch.tensor]])): Zero shot train set.
+            zero_shot_test_set (List[Tuple[torch.tensor, torch.tensor]])): Zero shot test set.
             epochs (int, optional): Number of time that the train process is repeated.
             callbacks (List[Callable], optional): List of callbacks called after each epoch.
             verbose (bool, optional): Flag that is used to decide to print or not training results on console.
@@ -137,7 +139,8 @@ class Trainer:
             mb_train_set = self.__create_batches(train_set)
             train_loss = self.train(mb_train_set)
             test_loss = self.evaluate(test_set)
-            zero_shot_loss = self.evaluate(zero_shot_test)
+            zero_shot_train_loss = self.evaluate(zero_shot_train_set)
+            zero_shot_test_loss = self.evaluate(zero_shot_test_set)
             end_time = time.time()
             self.model.save_transformer()
             epoch_mins, epoch_secs = self.__epoch_time(start_time, end_time)
@@ -145,6 +148,8 @@ class Trainer:
                 print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
                 print(f'\tTrain loss:\t{train_loss:.3f}')
                 print(f'\tTest loss:\t{test_loss:.3f}')
-                print(f'\tZero shot loss:\t{zero_shot_loss:.3f}')
+                print(f'\tZero shot train loss:\t{zero_shot_train_loss:.3f}')
+                print(f'\tZero shot test loss:\t{zero_shot_test_loss:.3f}')
             for callback in callbacks:
-                callback(train_loss, test_loss, zero_shot_loss, (epoch_mins, epoch_secs))
+                callback(train_loss, test_loss, zero_shot_train_loss, zero_shot_test_loss, (epoch_mins, epoch_secs))
+        return train_loss, test_loss, zero_shot_train_loss, zero_shot_test_loss

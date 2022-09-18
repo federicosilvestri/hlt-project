@@ -49,5 +49,5 @@ class Decoder(nn.Module):
         # attention = [batch size, n heads, trg len, src len]
         output = self.fc_out(trg)
         # output = [batch size, trg len, output dim]
-        output = torch.softmax(self.fc_out(trg), dim=-1)
+        output = torch.softmax(output, dim=-1)
         return output, attention
