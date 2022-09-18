@@ -7,6 +7,7 @@ from model.encoder import Encoder
 from model.transformer import Transformer
 from trainer.trainer import Trainer
 from pipeline import Pipeline
+import logging as lg
 
 
 class Hyperparameters:
@@ -17,6 +18,7 @@ class Hyperparameters:
     ENC_PF_DIM = [512]
     DEC_PF_DIM = [512]
     LEARNING_RATE = [0.005, 0.001, 0.0005]
+    CLIP = [1, None]
 
 
 class GridSearch:
@@ -36,8 +38,9 @@ class GridSearch:
         pipeline = Pipeline()
         dataset = pipeline.dataset_load()
         preprocessor = pipeline.preprocess(dataset)
-        TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET = pipeline.holdout(preprocessor)
-        hyperparams = product(
+        TR_SET, TS_SET = pipeline.holdout(preprocessor.trainable_data)
+        ZS_TR_SET, ZS_TS_SET = pipeline.holdout(preprocessor.zeroshot_data)
+        hyperparams = list(product(
             self.hyperparameters.PRETRAINED,
             self.hyperparameters.HID_DIM,
             self.hyperparameters.ENC_LAYERS,
@@ -45,8 +48,12 @@ class GridSearch:
             self.hyperparameters.ENC_PF_DIM,
             self.hyperparameters.DEC_PF_DIM,
             self.hyperparameters.LEARNING_RATE,
-        )
-        for PRETRAINED, HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE in hyperparams:
+            self.hyperparameters.CLIP,
+        ))
+        i = 0
+        for PRETRAINED, HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
+            i += 1
+            lg.info(f"Start configuration {i}/{len(hyperparams)}")
 
             SRC_PAD_IDX = preprocessor._pad_index_
             TRG_PAD_IDX = preprocessor._pad_index_
@@ -74,9 +81,11 @@ class GridSearch:
 
             model = Transformer(enc, dec, SRC_PAD_IDX, TRG_PAD_IDX, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-            trainer = Trainer(model, preprocessor._pad_index_, LEARNING_RATE)
+            trainer = Trainer(model, preprocessor._pad_index_, LEARNING_RATE, clip=CLIP)
             train_loss, test_loss, zero_shot_train_loss, zero_shot_test_loss = trainer(
                 TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=epochs, verbose=False)
+            translator = pipeline.create_translator(model, preprocessor)
+            bleu_results = pipeline.bleu_evaluation(translator, dataset.data)
 
             gs_dict_iter = {
                 "hyperparams": {
@@ -86,14 +95,16 @@ class GridSearch:
                     "DEC_LAYERS": DEC_LAYERS,
                     "ENC_PF_DIM": ENC_PF_DIM,
                     "DEC_PF_DIM": DEC_PF_DIM,
-                    "LEARNING_RATE": LEARNING_RATE
+                    "LEARNING_RATE": LEARNING_RATE,
+                    "CLIP": CLIP
                 },
-                "results": {
+                "loss": {
                     "train_loss": train_loss,
                     "test_loss": test_loss,
                     "zero_shot_train_loss": zero_shot_train_loss,
                     "zero_shot_test_loss": zero_shot_test_loss
-                }
+                },
+                "metric": bleu_results
             }
             with open(self.gs_file, 'w') as fp:
                 self.gs_dict.append(gs_dict_iter)

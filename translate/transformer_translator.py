@@ -4,14 +4,15 @@ from torch import nn
 from torchtext.data.metrics import bleu_score
 from torchmetrics import SacreBLEUScore
 from transformers import AutoTokenizer
-
-from utils import search_strategy
+from joblib import Parallel, delayed
+import numpy as np
 
 
 class TranslatedSet:
     """Class able to provide methods to evaluate the goodness of the model on NMT."""
 
-    def __init__(self, trgs: List[str], pred: List[str], trgs_tokens: List[List[str]], pred_tokens: List[List[str]]) -> None:
+    def __init__(self, trgs: List[str], pred: List[str], trgs_tokens: List[List[str]],
+                 pred_tokens: List[List[str]]) -> None:
         """TranslatedSet constructor.
 
         Args:
@@ -40,19 +41,20 @@ class TranslatedSet:
             float: sacre BLEU score.
         """
         metric = SacreBLEUScore()
-        return metric(self.pred, self.trgs)
+        return metric(self.pred, self.trgs).item()
 
 
 class TransformerTranslator:
     """Class able to construct object that translate sentences given a transformer model."""
 
     def __init__(
-        self,
-        model: nn.Module,
-        tokenizer_encoder: AutoTokenizer,
-        tokenizer_decoder: AutoTokenizer,
-        max_length: int = 100,
-        device: str = 'cpu'
+            self,
+            model: nn.Module,
+            tokenizer_encoder: AutoTokenizer,
+            tokenizer_decoder: AutoTokenizer,
+            max_length: int = 100,
+            chunks: int = None,
+            device: str = 'cpu'
     ) -> None:
         """TransformerTranslator constructor.
 
@@ -67,6 +69,7 @@ class TransformerTranslator:
         self.tokenizer_encoder = tokenizer_encoder
         self.tokenizer_decoder = tokenizer_decoder
         self.max_length = max_length
+        self.chunks = chunks
         self.device = device
 
     def __call__(self, src_sentence: str) -> str:
@@ -105,6 +108,18 @@ class TransformerTranslator:
         res_sent = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens)
         return res_sent
 
+    def compute_test_set_chunk(self, test_set):
+        trgs, preds, trgs_tokens, preds_tokens = [], [], [], []
+        for src, trg in test_set:
+            trg_tokens = self.tokenizer_decoder.tokenize(trg)
+            pred = self.__call__(src)
+            pred_tokens = self.tokenizer_decoder.tokenize(pred)
+            trgs.append([trg])
+            preds.append(pred)
+            trgs_tokens.append([trg_tokens])
+            preds_tokens.append(pred_tokens)
+        return trgs, preds, trgs_tokens, preds_tokens
+
     def create_translatedset(self, test_set: List[Tuple[str, str]]) -> TranslatedSet:
         """Method able to create a TranslatedSet.
 
@@ -114,14 +129,18 @@ class TransformerTranslator:
         Return:
             TranslatedSet: Translated set.
         """
-        trgs = []
-        trgs_tokens = []
-        pred = []
-        pred_tokens = []
-        for src, trg in test_set:
-            trgs.append([trg])
-            trgs_tokens.append([self.tokenizer_decoder.tokenize(trg)])
-            prediction = self.__call__(src)
-            pred.append(prediction)
-            pred_tokens.append(self.tokenizer_decoder.tokenize(prediction))
-        return TranslatedSet(trgs, pred, trgs_tokens, pred_tokens)
+        trgs, preds, trgs_tokens, preds_tokens = [], [], [], []
+        if self.chunks is not None:
+            test_set = np.array_split(test_set, self.chunks)
+
+        with Parallel(n_jobs=-1, prefer="processes") as parallel:
+            result_chunks = parallel(
+                delayed(self.compute_test_set_chunk)(chunk)
+                for chunk in test_set
+            )
+            for trg_chunk, pred_chunk, trg_tokens_chunk, pred_tokens_chunk in result_chunks:
+                trgs += trg_chunk
+                preds += pred_chunk
+                trgs_tokens += trg_tokens_chunk
+                preds_tokens += pred_tokens_chunk
+        return TranslatedSet(trgs, preds, trgs_tokens, preds_tokens)

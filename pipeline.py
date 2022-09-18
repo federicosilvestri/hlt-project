@@ -12,7 +12,6 @@ from data import Dataset, DatasetDownloader
 from preprocessing import Preprocessor, PreprocessSerializer
 from utils.plot_handler import PlotHandler
 
-
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 
@@ -51,7 +50,7 @@ class Pipeline:
 
         if not preprocessor_serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, max_length=100, limit=None, chunks=CHUNKS)
+            preprocessor = Preprocessor(dataset=dataset, max_length=100, chunks=CHUNKS, limit=None)
             # executing preprocessing
             preprocessor.execute()
 
@@ -63,20 +62,16 @@ class Pipeline:
             preprocessor = preprocessor_serializer.load()
         return preprocessor
 
-    def holdout(self, preprocessor):
+    def holdout(self, data):
         #
         # Hold out
         #
         logging.info("Splitting dataset in hold out way")
-        train_data_size = len(preprocessor.trainable_data)
+        train_data_size = len(data)
         threshold = int(train_data_size - train_data_size * HOLDOUT_VALID_FRACTION)
-        TR_SET = preprocessor.trainable_data[:threshold]
-        TS_SET = preprocessor.trainable_data[threshold:]
-        zs_train_data_size = len(preprocessor.zeroshot_data)
-        threshold = int(zs_train_data_size - zs_train_data_size * HOLDOUT_VALID_FRACTION)
-        ZS_TR_SET = preprocessor.trainable_data[:threshold]
-        ZS_TS_SET = preprocessor.trainable_data[threshold:]
-        return TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET
+        TR_SET = data[:threshold]
+        TS_SET = data[threshold:]
+        return TR_SET, TS_SET
 
     def model_creation(self, preprocessor):
         #
@@ -128,13 +123,15 @@ class Pipeline:
         #
         plot_handler.save_plot()
 
-    def translate(self, model, dataset, preprocessor):
+    def create_translator(self, model, preprocessor):
+        return TransformerTranslator(model, preprocessor._tokenizer_,
+                                     preprocessor._tokenizer_, MAX_LENGTH, CHUNKS, DEVICE)
+
+    def translate(self, translator, dataset):
         #
         # Translation of some sentences
         #
         ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.data.items())]
-        translator = TransformerTranslator(model, preprocessor._tokenizer_,
-                                           preprocessor._tokenizer_, MAX_LENGTH, DEVICE)
 
         logging.info("Printing first 5 sentance translation in zero-shot way")
         for key, value in ZERO_SHOT_SET[:5]:
@@ -144,20 +141,41 @@ class Pipeline:
             print(f'PRED: {pred}')
             print()
 
-        return translator
-
     def bleu_evaluation(self, translator, dataset):
-        ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.data.items())]
+        ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.items())]
+        DATA_SET = [(f"[2fr] {key}", value['fr']) for key, value in list(dataset.items())] + \
+                   [(f"[2de] {key}", value['de']) for key, value in list(dataset.items())] + \
+                   [(f"[2es] {key}", value['es']) for key, value in list(dataset.items())] + \
+                   [(f"[2it] {value['fr']}", value['it']) for key, value in list(dataset.items())] + \
+                   [(f"[2it] {value['de']}", value['it']) for key, value in list(dataset.items())] + \
+                   [(f"[2it] {value['es']}", value['it']) for key, value in list(dataset.items())]
+        DT_TRAIN, DT_TEST = self.holdout(DATA_SET)
+        ZS_TRAIN, ZS_TEST = self.holdout(ZERO_SHOT_SET)
+        test_sets = [
+            ("zeroshot_test", ZS_TEST),
+            ("zeroshot_train", ZS_TRAIN),
+            ("dataset_test", DT_TEST),
+            ("dataset_train", DT_TRAIN),
+        ]
         #
         # Evaluation of model using BLEU and sacreBLEU
         #
-        logging.info("Translated set creation")
-        translated_set = translator.create_translatedset(ZERO_SHOT_SET)
+        results = {}
+        for label, test_set in test_sets:
+            logging.info(f"Translated set {label} creation")
+            translated_set = translator.create_translatedset(test_set)
 
-        logging.info("BLEU score computation")
-        bleu_score_zero_shot = translated_set.bleu()
-        print(f'BLEU score zero shot = {bleu_score_zero_shot*100:.2f}%')
+            logging.info("BLEU score computation")
+            bleu_score = translated_set.bleu()
+            print(f'BLEU score {label} = {bleu_score * 100:.2f}%')
 
-        logging.info("sacreBLEU score computation")
-        sacre_bleu_score_zero_shot = translated_set.sacre_bleu()
-        print(f'sacreBLEU score zero shot = {sacre_bleu_score_zero_shot*100:.2f}%')
+            logging.info("sacreBLEU score computation")
+            sacre_bleu_score = translated_set.sacre_bleu()
+
+            print(f'sacreBLEU score {label} = {sacre_bleu_score * 100:.2f}%')
+
+            results[label] = {
+                "BLEU": bleu_score,
+                "sacreBLEU": sacre_bleu_score
+            }
+        return results

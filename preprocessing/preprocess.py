@@ -1,5 +1,4 @@
 from functools import reduce
-import random
 import typing as tp
 from joblib import Parallel, delayed
 import numpy as np
@@ -84,7 +83,6 @@ class Preprocessor:
                 for train_str in train_strings
             )
             train_data = reduce(lambda x, y: x + y, train_data_chunks)
-        random.shuffle(train_data)
         return train_data
 
     def execute(self):
