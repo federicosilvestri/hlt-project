@@ -1,3 +1,4 @@
+from functools import reduce
 import random
 import typing as tp
 from joblib import Parallel, delayed
@@ -11,13 +12,14 @@ from utils import search_strategy
 
 class Preprocessor:
     def __init__(
-        self, dataset: Dataset, max_length: int = 100, limit: tp.Optional[int] = None
+        self, dataset: Dataset, max_length: int = 100, limit: tp.Optional[int] = None, chunks: int = None
     ):
         # we need to implement the search strategy
         self._device_: str = search_strategy()
         self._dataset_ = dataset
         self._max_length_: int = max_length
         self._limit_ = limit if limit is not None else dataset.size
+        self.chunks = chunks
         self._tokenizer_ = BertTokenizer.from_pretrained(
             "bert-base-multilingual-uncased"
         )
@@ -71,13 +73,17 @@ class Preprocessor:
                 (f"[2{trg}] {replace_lang(src, k, v)}", replace_lang(trg, k, v))
                 for k, v in self._dataset_.data.items()
             ][: self._limit_]
-        train_strings = np.array_split(train_strings, 50)
-        train_data = []
+        if self.chunks is not None:
+            train_strings = np.array_split(train_strings, self.chunks)
+        else:
+            train_strings = [train_strings]
+        
         with Parallel(n_jobs=-1, prefer="processes") as parallel:
-            train_data += parallel(
+            train_data_chunks = parallel(
                 delayed(self._preprocessing_)(train_str)
                 for train_str in train_strings
             )
+            train_data = reduce(lambda x, y: x + y, train_data_chunks)
         random.shuffle(train_data)
         return train_data
 

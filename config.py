@@ -17,6 +17,7 @@ DATASET_FILE_NAME = "dataset.json"
 # Preprocessor Serializer
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
 PREPROCESSOR_FILE_NAME = "preprocessor.pickle"
+CHUNKS = 50
 
 # Random setting
 SEED = 1234

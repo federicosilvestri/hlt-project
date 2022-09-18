@@ -51,7 +51,7 @@ class Pipeline:
 
         if not preprocessor_serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, max_length=100, limit=None)
+            preprocessor = Preprocessor(dataset=dataset, max_length=100, limit=None, chunks=CHUNKS)
             # executing preprocessing
             preprocessor.execute()
 

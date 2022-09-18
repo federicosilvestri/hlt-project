@@ -10,7 +10,7 @@ import logging as lg
 class Trainer:
     """This class create the instance able to train a trnsformer model for a NMT task."""
 
-    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 64, clip: int = 1) -> None:
+    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 32, clip: int = 1) -> None:
         """Trainer constructor
 
         Args:
