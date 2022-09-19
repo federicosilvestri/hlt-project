@@ -40,7 +40,7 @@ class Pipeline:
         logging.info("Loading dataset")
         return Dataset(dataset_downloader.downloaded_file)
 
-    def preprocess(self, dataset):
+    def preprocess(self, dataset, limit=None):
         #
         # Execute preprocessing
         #
@@ -50,7 +50,7 @@ class Pipeline:
 
         if not preprocessor_serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, max_length=100, chunks=CHUNKS, limit=None)
+            preprocessor = Preprocessor(dataset=dataset, max_length=100, chunks=CHUNKS, limit=limit)
             # executing preprocessing
             preprocessor.execute()
 
