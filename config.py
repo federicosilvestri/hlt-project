@@ -17,7 +17,7 @@ DATASET_FILE_NAME = "dataset.json"
 # Preprocessor Serializer
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
 PREPROCESSOR_FILE_NAME = "preprocessor.pickle"
-CHUNKS = 50
+CHUNKS = 64
 
 # Random setting
 SEED = 1234
@@ -47,7 +47,8 @@ MODEL_FILE_NAME = "zero_shot_nmt.torch"
 # Trainer configuration
 HOLDOUT_VALID_FRACTION = 0.1
 BATCH_SIZE = 32
-EPOCHS = 1
+EPOCHS = 10
+CLIP = 1
 
 # Translator configuration
 MAX_LENGTH = 100

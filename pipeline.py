@@ -50,7 +50,7 @@ class Pipeline:
 
         if not preprocessor_serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, max_length=100, chunks=CHUNKS, limit=limit)
+            preprocessor = Preprocessor(dataset=dataset, max_length=MAX_LENGTH, chunks=CHUNKS, limit=limit)
             # executing preprocessing
             preprocessor.execute()
 
@@ -104,7 +104,7 @@ class Pipeline:
 
         return Transformer(enc, dec, SRC_PAD_IDX, TRG_PAD_IDX, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-    def train_model(self, model, TRG_PAD_IDX, TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET):
+    def train_model(self, model, TRG_PAD_IDX, TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=EPOCHS, clip=CLIP):
         #
         # Setup plot handler
         #
@@ -113,9 +113,9 @@ class Pipeline:
         #
         # Model training
         #
-        trainer = Trainer(model, trg_pad_idx=TRG_PAD_IDX, batch_size=BATCH_SIZE)
+        trainer = Trainer(model, trg_pad_idx=TRG_PAD_IDX, batch_size=BATCH_SIZE, clip=clip)
         logging.info("Start model training")
-        trainer(TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=EPOCHS, callbacks=[plot_handler.model_callback])
+        trainer(TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=epochs, callbacks=[plot_handler.model_callback])
         logging.info("End model training")
 
         #
