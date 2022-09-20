@@ -30,15 +30,13 @@ class Encoder(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-        self.scale = torch.sqrt(torch.FloatTensor([hid_dim])).to(device)
-
-    def forward(self, src):
+    def forward(self, src, src_mask = None):
         # src = [batch size, src len]
         src_len = src.shape[1]
         # pos = [batch size, src len]
-        src = self.dropout((self.tok_embedding(src) * self.scale) + self.pos_embedding(src_len))
+        src = self.dropout((self.tok_embedding(src)) + self.pos_embedding(src_len))
         # src = [batch size, src len, hid dim]
         for layer in self.layers:
-            src = layer(src)
+            src = layer(src, src_mask)
         # src = [batch size, src len, hid dim]
         return src

@@ -1,3 +1,4 @@
+import math
 import torch
 from torch import nn
 
@@ -19,11 +20,11 @@ class MultiHeadAttentionLayer(nn.Module):
         self.fc_o = nn.Linear(hid_dim, hid_dim)
 
         self.dropout = nn.Dropout(dropout)
-
-        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim])).to(device)
+        self.device = device
 
     def forward(self, query, key, value, mask=None):
         batch_size = query.shape[0]
+        scale = math.sqrt(key.shape[2])
         # query = [batch size, query len, hid dim]
         # key = [batch size, key len, hid dim]
         # value = [batch size, value len, hid dim]
@@ -36,7 +37,7 @@ class MultiHeadAttentionLayer(nn.Module):
                    self.head_dim).permute(0, 2, 1, 3)  # K = [batch size, n heads, key len, head dim]
         V = V.view(batch_size, -1, self.n_heads,
                    self.head_dim).permute(0, 2, 1, 3)  # V = [batch size, n heads, value len, head dim]
-        energy = torch.matmul(Q, K.permute(0, 1, 3, 2)) / self.scale
+        energy = torch.matmul(Q, K.permute(0, 1, 3, 2)) / scale
         # energy = [batch size, n heads, query len, key len]
         if mask is not None:
             energy = energy.masked_fill(mask == 0, -1e10)

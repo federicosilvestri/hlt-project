@@ -22,11 +22,11 @@ class EncoderLayer(nn.Module):
                                             dropout)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, src):
+    def forward(self, src, src_mask = None):
         # src = [batch size, src len, hid dim]
 
         # self attention
-        _src, _ = self.self_attention(src, src, src)
+        _src, _ = self.self_attention(src, src, src, src_mask)
 
         # dropout, residual connection and layer norm
         src = self.self_attn_layer_norm(src + self.dropout(_src))

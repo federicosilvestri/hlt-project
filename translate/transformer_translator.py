@@ -93,14 +93,14 @@ class TransformerTranslator:
             .to(self.device)
             .data["input_ids"]
         )
-        src_tensor = src_indexes.unsqueeze(0).to(self.device)
+        src_tensor = src_indexes.to(self.device)
         trg_indexes = self.tokenizer_decoder.convert_tokens_to_ids(["[CLS]"])
         for _ in range(self.max_length):
             trg_tensor = torch.tensor(trg_indexes).unsqueeze(0).to(self.device)
             with torch.no_grad():
                 output, _ = self.model(src_tensor, trg_tensor)
-            pred_token = output.argmax(2)[:, -1].item()
-            trg_indexes.append(pred_token)
+            pred_index = output.argmax(-1)[:, -1].item()
+            trg_indexes.append(pred_index)
             trg_tokens = self.tokenizer_decoder.convert_ids_to_tokens(trg_indexes)
             if trg_tokens[-1] == "[SEP]":
                 break

@@ -25,7 +25,7 @@ class DecoderLayer(nn.Module):
         self.ff_layer_norm = nn.LayerNorm(hid_dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, trg, enc_src, trg_mask):
+    def forward(self, trg, enc_src, src_mask, trg_mask):
         # trg = [batch size, trg len, hid dim]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, 1, trg len, trg len]
@@ -39,7 +39,7 @@ class DecoderLayer(nn.Module):
 
         # encoder attention
         _trg, attention = self.encoder_attention(
-            trg, enc_src, enc_src)
+            trg, enc_src, enc_src, src_mask)
 
         # dropout, residual connection and layer norm
         trg = self.enc_attn_layer_norm(trg + self.dropout(_trg))

@@ -32,22 +32,19 @@ class Decoder(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-        self.scale = torch.sqrt(torch.FloatTensor([hid_dim])).to(device)
-
-    def forward(self, trg, enc_src, trg_mask):
+    def forward(self, trg, enc_src, src_mask = None, trg_mask = None):
         # trg = [batch size, trg len]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, 1, trg len, trg len]
         trg_len = trg.shape[1]
         # pos = [batch size, trg len]
         trg = self.dropout(
-            (self.tok_embedding(trg) * self.scale) + self.pos_embedding(trg_len))
+            (self.tok_embedding(trg)) + self.pos_embedding(trg_len))
         # trg = [batch size, trg len, hid dim]
         for layer in self.layers:
-            trg, attention = layer(trg, enc_src, trg_mask)
+            trg, attention = layer(trg, enc_src, src_mask, trg_mask)
         # trg = [batch size, trg len, hid dim]
         # attention = [batch size, n heads, trg len, src len]
         output = self.fc_out(trg)
         # output = [batch size, trg len, output dim]
-        output = torch.softmax(output, dim=-1)
         return output, attention
