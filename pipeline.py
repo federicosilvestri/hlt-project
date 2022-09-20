@@ -132,9 +132,10 @@ class Pipeline:
         # Translation of some sentences
         #
         ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.data.items())]
+        ZS_TRAIN, ZS_TEST = self.holdout(ZERO_SHOT_SET)
 
-        logging.info("Printing first 5 sentance translation in zero-shot way")
-        for key, value in ZERO_SHOT_SET[:5]:
+        logging.info("Printing 4 sentances translation in zero-shot train and test way")
+        for key, value in ZS_TEST[:2] + ZS_TEST[:2]:
             pred = translator(key)
             print(f'SRC: {key}')
             print(f'OUT: {value}')
