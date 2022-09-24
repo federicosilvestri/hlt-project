@@ -93,20 +93,14 @@ class TransformerTranslator:
             .to(self.device)
             .data["input_ids"]
         )
-        src_tensor = src_indexes.unsqueeze(0).to(self.device)
-        src_mask = self.model.make_src_mask(src_tensor)
         src_tensor = src_indexes.to(self.device)
         trg_indexes = self.tokenizer_decoder.convert_tokens_to_ids(["[CLS]"])
         with torch.no_grad():
-            src_mask = src_mask.squeeze(1).squeeze(2)
-            enc_src = self.model.encoder(src_tensor, src_mask)
+            enc_src = self.model.encoder(src_tensor)
         for _ in range(self.max_length):
             trg_tensor = torch.tensor(trg_indexes).unsqueeze(0).to(self.device)
-            trg_mask = self.model.make_trg_mask(trg_tensor)
             with torch.no_grad():
-                output, attention = self.model.decoder(
-                    trg_tensor, enc_src, src_mask, trg_mask
-                )
+                output, attention = self.model.decoder(trg_tensor, enc_src)
             pred_index = output.argmax(-1)[:, -1].item()
             trg_indexes.append(pred_index)
             trg_tokens = self.tokenizer_decoder.convert_ids_to_tokens(trg_indexes)

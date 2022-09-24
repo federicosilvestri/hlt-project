@@ -55,8 +55,6 @@ class GridSearch:
             i += 1
             lg.info(f"Start configuration {i}/{len(hyperparams)}")
 
-            SRC_PAD_IDX = preprocessor._pad_index_
-            TRG_PAD_IDX = preprocessor._pad_index_
             INPUT_DIM = len(preprocessor._tokenizer_)
             OUTPUT_DIM = len(preprocessor._tokenizer_)
 
@@ -79,9 +77,9 @@ class GridSearch:
                           DEC_DROPOUT,
                           DEVICE)
 
-            model = Transformer(enc, dec, SRC_PAD_IDX, TRG_PAD_IDX, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
+            model = Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-            trainer = Trainer(model, preprocessor._pad_index_, LEARNING_RATE, clip=CLIP)
+            trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP)
             train_loss, test_loss, zero_shot_train_loss, zero_shot_test_loss = trainer(
                 TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=epochs, verbose=False)
             translator = pipeline.create_translator(model, preprocessor)

@@ -25,7 +25,7 @@ class DecoderLayer(nn.Module):
         self.ff_layer_norm = nn.LayerNorm(hid_dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, trg, enc_src, src_mask, trg_mask):
+    def forward(self, trg, enc_src, src_mask=None, trg_mask=None):
         # trg = [batch size, trg len, hid dim]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, 1, trg len, trg len]

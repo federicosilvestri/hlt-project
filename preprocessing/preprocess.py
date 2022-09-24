@@ -28,8 +28,6 @@ class Preprocessor:
         self._tokenizer_.add_tokens([f"[2{lang}]" for lang in langs])
         for lang in langs:
             langs_index[lang] = self._tokenizer_.get_added_vocab()[f"[2{lang}]"]
-        self._tokenizer_.add_special_tokens({"pad_token": "[PAD]"})
-        self._pad_index_ = self._tokenizer_.vocab["[PAD]"]
         self.trainable_data = None
         self.zeroshot_data = None
 
