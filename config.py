@@ -17,7 +17,7 @@ DATASET_FILE_NAME = "dataset.json"
 # Preprocessor Serializer
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
 PREPROCESSOR_FILE_NAME = "preprocessor.pickle"
-CHUNKS = 64
+CHUNKS = 8
 
 # Random setting
 SEED = 1234
@@ -47,7 +47,7 @@ MODEL_FILE_NAME = "zero_shot_nmt.torch"
 # Trainer configuration
 HOLDOUT_VALID_FRACTION = 0.1
 BATCH_SIZE = 32
-EPOCHS = 50
+EPOCHS = 10
 CLIP = 1
 LEARNING_RATE = 0.0005
 
@@ -56,4 +56,3 @@ MAX_LENGTH = 100
 
 # Plot configuration
 PLOTS_DIR = GENERATED_FILE_DIR / "plots"
-LOSS_PLOT_FILE_NAME = "loss_plot.png"

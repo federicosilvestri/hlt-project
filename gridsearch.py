@@ -11,14 +11,13 @@ import logging as lg
 
 
 class Hyperparameters:
-    PRETRAINED = [False, True]
     HID_DIM = [256, 512, 768]
-    ENC_LAYERS = [3, 4, 6, 8]
+    ENC_LAYERS = [3, 4, 6, 8, None]
     DEC_LAYERS = [3, 4, 6, 8]
     ENC_PF_DIM = [512]
     DEC_PF_DIM = [512]
     LEARNING_RATE = [0.005, 0.001, 0.0005]
-    CLIP = [1, None]
+    CLIP = [1]
 
 
 class GridSearch:
@@ -41,7 +40,6 @@ class GridSearch:
         TR_SET, TS_SET = pipeline.holdout(preprocessor.trainable_data)
         ZS_TR_SET, ZS_TS_SET = pipeline.holdout(preprocessor.zeroshot_data)
         hyperparams = list(product(
-            self.hyperparameters.PRETRAINED,
             self.hyperparameters.HID_DIM,
             self.hyperparameters.ENC_LAYERS,
             self.hyperparameters.DEC_LAYERS,
@@ -51,14 +49,14 @@ class GridSearch:
             self.hyperparameters.CLIP,
         ))
         i = 0
-        for PRETRAINED, HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
+        for HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
             lg.info(f"Start configuration {i}/{len(hyperparams)}")
 
             INPUT_DIM = len(preprocessor._tokenizer_)
             OUTPUT_DIM = len(preprocessor._tokenizer_)
 
-            if PRETRAINED:
+            if ENC_LAYERS is None:
                 enc = BERTEncoder(HID_DIM, ENC_HEADS, len(preprocessor._tokenizer_), DEVICE)
             else:
                 enc = Encoder(INPUT_DIM,
@@ -80,8 +78,7 @@ class GridSearch:
             model = Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
             trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP)
-            train_loss, test_loss, zero_shot_train_loss, zero_shot_test_loss = trainer(
-                TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=epochs, verbose=False)
+            train_loss, test_loss = trainer(TR_SET, TS_SET, epochs=epochs)
             translator = pipeline.create_translator(model, preprocessor)
             bleu_results = pipeline.bleu_evaluation(translator, dataset.data)
 
@@ -97,10 +94,16 @@ class GridSearch:
                     "CLIP": CLIP
                 },
                 "loss": {
-                    "train_loss": train_loss,
-                    "test_loss": test_loss,
-                    "zero_shot_train_loss": zero_shot_train_loss,
-                    "zero_shot_test_loss": zero_shot_test_loss
+                    "train": train_loss,
+                    "test": test_loss,
+                    "zeroshot_train": trainer.evaluate_loss(ZS_TR_SET),
+                    "zeroshot_test": trainer.evaluate_loss(ZS_TS_SET)
+                },
+                "accuracy": {
+                    "train": trainer.evaluate_metric(TR_SET),
+                    "test": trainer.evaluate_metric(TS_SET),
+                    "zeroshot_train": trainer.evaluate_metric(ZS_TR_SET),
+                    "zeroshot_test": trainer.evaluate_metric(ZS_TS_SET)
                 },
                 "metric": bleu_results
             }

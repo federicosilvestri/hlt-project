@@ -1,4 +1,5 @@
 from model.bert_encoder import BERTEncoder
+from trainer.trainer_callbacks import print_epoch_loss_accuracy
 from translate.transformer_translator import TransformerTranslator
 from trainer.trainer import Trainer
 from model.transformer import Transformer
@@ -102,24 +103,14 @@ class Pipeline:
 
         return Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-    def train_model(self, model, TRG_INDEX_PAD, TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=EPOCHS, clip=CLIP, learning_rate=LEARNING_RATE):
-        #
-        # Setup plot handler
-        #
-        plot_handler = PlotHandler(PLOTS_DIR, LOSS_PLOT_FILE_NAME)
-
+    def train_model(self, model, TRG_INDEX_PAD, TR_SET, TS_SET, epochs=EPOCHS, clip=CLIP, learning_rate=LEARNING_RATE, callbacks=[]):
         #
         # Model training
         #
         trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip)
         logging.info("Start model training")
-        trainer(TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs=epochs, callbacks=[plot_handler.model_callback])
+        trainer(TR_SET, TS_SET, epochs=epochs, callbacks=callbacks)
         logging.info("End model training")
-
-        #
-        # Save plot locally
-        #
-        plot_handler.save_plot()
 
     def create_translator(self, model, preprocessor):
         return TransformerTranslator(model, preprocessor._tokenizer_,
@@ -140,7 +131,7 @@ class Pipeline:
             print(f'PRED: {pred}')
             print()
 
-    def bleu_evaluation(self, translator, dataset, limit_dt=None, limit_zs=None):
+    def bleu_evaluation(self, translator, dataset, limit=None):
         ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.items())]
         DATA_SET = [(f"[2fr] {key}", value['fr']) for key, value in list(dataset.items())] + \
                    [(f"[2de] {key}", value['de']) for key, value in list(dataset.items())] + \
@@ -148,8 +139,13 @@ class Pipeline:
                    [(f"[2it] {value['fr']}", value['it']) for key, value in list(dataset.items())] + \
                    [(f"[2it] {value['de']}", value['it']) for key, value in list(dataset.items())] + \
                    [(f"[2it] {value['es']}", value['it']) for key, value in list(dataset.items())]
-        DT_TRAIN, DT_TEST = self.holdout(DATA_SET[:limit_dt])
-        ZS_TRAIN, ZS_TEST = self.holdout(ZERO_SHOT_SET[:limit_zs])
+        DT_TRAIN, DT_TEST = self.holdout(DATA_SET)
+        ZS_TRAIN, ZS_TEST = self.holdout(ZERO_SHOT_SET)
+        if limit is not None:
+            DT_TRAIN = DT_TRAIN[:limit]
+            DT_TEST = DT_TEST[:limit]
+            ZS_TRAIN = ZS_TRAIN[:limit]
+            ZS_TEST = ZS_TEST[:limit]
         test_sets = [
             ("zeroshot_test", ZS_TEST),
             ("zeroshot_train", ZS_TRAIN),
