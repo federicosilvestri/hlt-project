@@ -107,7 +107,7 @@ class Pipeline:
         #
         # Model training
         #
-        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip)
+        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip, device=DEVICE)
         logging.info("Start model training")
         trainer(TR_SET, TS_SET, epochs=epochs, callbacks=callbacks)
         logging.info("End model training")

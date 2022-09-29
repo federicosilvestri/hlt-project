@@ -11,7 +11,7 @@ from torchmetrics import Accuracy
 class Trainer:
     """This class create the instance able to train a trnsformer model for a NMT task."""
 
-    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 32, clip: int = 1) -> None:
+    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 32, clip: int = 1, device='cpu') -> None:
         """Trainer constructor
 
         Args:
@@ -26,7 +26,8 @@ class Trainer:
         self.batch_size = batch_size
         self.optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         self.criterion = nn.CrossEntropyLoss(ignore_index=trg_pad_idx)
-        self.accuracy = Accuracy()
+        self.accuracy = Accuracy().to(device)
+        self.device = device
 
     def __epoch_time(self, start_time: float, end_time: float) -> Tuple[int, int]:
         """Method able to extract minutes and seconds from a start and an end time.
@@ -125,23 +126,23 @@ class Trainer:
               test_set (List[Tuple[torch.tensor, torch.tensor]])): Test set.
 
           Return:
-              float: Test loss related to the current epoch.
+              float: Test accuracy related to the current epoch.
         """
         self.model.eval()
-        epoch_loss = 0
+        epoch_acc = 0
         with torch.no_grad():
             for src, trg in test_set:
                 output, _ = self.model(src, trg[:, :-1])
                 # output = [batch size, trg len - 1, output dim]
                 # trg = [batch size, trg len]
                 output_dim = output.shape[-1]
-                output = output.contiguous().view(-1, output_dim)
+                output = output.contiguous().view(-1, output_dim).argmax(-1)
                 trg = trg[:, 1:].contiguous().view(-1)
                 # output = [batch size * trg len - 1, output dim]
                 # trg = [batch size * trg len - 1]
-                loss = self.accuracy(output.argmax(-1), trg)
-                epoch_loss += loss.item()
-        return epoch_loss / len(test_set)
+                accuracy = self.accuracy(output, trg)
+                epoch_acc += accuracy.item()
+        return epoch_acc / len(test_set)
 
     def __call__(self, train_set: List[Tuple[torch.tensor, torch.tensor]],
                  test_set: List[Tuple[torch.tensor, torch.tensor]],

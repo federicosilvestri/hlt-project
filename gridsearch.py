@@ -77,7 +77,7 @@ class GridSearch:
 
             model = Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-            trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP)
+            trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP, device=DEVICE)
             train_loss, test_loss = trainer(TR_SET, TS_SET, epochs=epochs)
             translator = pipeline.create_translator(model, preprocessor)
             bleu_results = pipeline.bleu_evaluation(translator, dataset.data)
