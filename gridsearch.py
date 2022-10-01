@@ -12,8 +12,8 @@ import logging as lg
 
 class Hyperparameters:
     HID_DIM = [256, 512, 768]
-    ENC_LAYERS = [3, 4, 6, 8, None]
-    DEC_LAYERS = [3, 4, 6, 8]
+    ENC_LAYERS = [3, 6, 8, None]
+    DEC_LAYERS = [3, 6, 8]
     ENC_PF_DIM = [512]
     DEC_PF_DIM = [512]
     LEARNING_RATE = [0.005, 0.001, 0.0005]
