@@ -39,7 +39,7 @@ class Pipeline:
         # Creating the dataset
         #
         logging.info("Loading dataset")
-        return Dataset(dataset_downloader.downloaded_file)
+        return Dataset(dataset_downloader.downloaded_file, cut=DATASET_CUT)
 
     def preprocess(self, dataset, limit=None):
         #

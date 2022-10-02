@@ -13,6 +13,7 @@ if not GENERATED_FILE_DIR.exists():
 DATASET_URL = "https://github.com/federicosilvestri/hlt-parallel-dataset/blob/master/processed/parallel.json?raw=true"
 DATASET_DOWNLOAD_DIR = GENERATED_FILE_DIR / "dataset"
 DATASET_FILE_NAME = "dataset.json"
+DATASET_CUT = 6
 
 # Preprocessor Serializer
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
