@@ -13,7 +13,7 @@ if not GENERATED_FILE_DIR.exists():
 DATASET_URL = "https://github.com/federicosilvestri/hlt-parallel-dataset/blob/master/processed/parallel.json?raw=true"
 DATASET_DOWNLOAD_DIR = GENERATED_FILE_DIR / "dataset"
 DATASET_FILE_NAME = "dataset.json"
-DATASET_CUT = 6
+DATASET_CUT = 1000
 
 # Preprocessor Serializer
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
@@ -51,9 +51,11 @@ BATCH_SIZE = 32
 EPOCHS = 10
 CLIP = 1
 LEARNING_RATE = 0.0005
+LIMIT_EVAL = 1000
 
 # Translator configuration
 MAX_LENGTH = 100
+LIMIT_BLEU = 100
 
 # Plot configuration
 PLOTS_DIR = GENERATED_FILE_DIR / "plots"

@@ -38,4 +38,4 @@ pipeline.train_model(model, preprocessor._tokenizer_.vocab['pad'], TR_SET, TS_SE
 plot_handler_factory.save_all()
 
 pipeline.translate(translator, dataset)
-pipeline.bleu_evaluation(translator, dataset.data)
+pipeline.bleu_evaluation(translator, dataset.data, limit=100)

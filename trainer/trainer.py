@@ -11,7 +11,8 @@ from torchmetrics import Accuracy
 class Trainer:
     """This class create the instance able to train a trnsformer model for a NMT task."""
 
-    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 32, clip: int = 1, device='cpu') -> None:
+    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 32,
+                 clip: int = 1, device='cpu', limit_eval=None, ) -> None:
         """Trainer constructor
 
         Args:
@@ -28,6 +29,7 @@ class Trainer:
         self.criterion = nn.CrossEntropyLoss(ignore_index=trg_pad_idx)
         self.accuracy = Accuracy().to(device)
         self.device = device
+        self.limit_eval = limit_eval
 
     def __epoch_time(self, start_time: float, end_time: float) -> Tuple[int, int]:
         """Method able to extract minutes and seconds from a start and an end time.
@@ -44,7 +46,8 @@ class Trainer:
         elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
         return elapsed_mins, elapsed_secs
 
-    def __create_batches(self, train_set: List[Tuple[torch.tensor, torch.tensor]]) -> List[Tuple[torch.tensor, torch.tensor]]:
+    def __create_batches(self, train_set: List[Tuple[torch.tensor, torch.tensor]]) -> List[
+        Tuple[torch.tensor, torch.tensor]]:
         """Method able to create batches of a train set.
 
         Args:
@@ -56,7 +59,7 @@ class Trainer:
         num_batches = math.ceil(len(train_set) / self.batch_size)
         minibatch_tr = []
         for num_batch in range(num_batches):
-            stop_index = (num_batch+1) * self.batch_size
+            stop_index = (num_batch + 1) * self.batch_size
             stop_index = stop_index if len(
                 train_set) > stop_index else len(train_set)
             batch_train_data = train_set[num_batch *
@@ -106,7 +109,7 @@ class Trainer:
         self.model.eval()
         epoch_loss = 0
         with torch.no_grad():
-            for src, trg in test_set:
+            for src, trg in test_set[:self.limit_eval]:
                 output, _ = self.model(src, trg[:, :-1])
                 # output = [batch size, trg len - 1, output dim]
                 # trg = [batch size, trg len]
@@ -131,7 +134,7 @@ class Trainer:
         self.model.eval()
         epoch_acc = 0
         with torch.no_grad():
-            for src, trg in test_set:
+            for src, trg in test_set[:self.limit_eval]:
                 output, _ = self.model(src, trg[:, :-1])
                 # output = [batch size, trg len - 1, output dim]
                 # trg = [batch size, trg len]

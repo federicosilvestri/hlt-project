@@ -9,6 +9,8 @@ from trainer.trainer import Trainer
 from pipeline import Pipeline
 import logging as lg
 
+from trainer.trainer_callbacks import print_epoch_loss_accuracy
+
 
 class Hyperparameters:
     HID_DIM = [256, 512, 768]
@@ -49,6 +51,7 @@ class GridSearch:
             self.hyperparameters.CLIP,
         ))
         i = 0
+        print_callback = print_epoch_loss_accuracy(TR_SET, TS_SET, accuracy=False)
         for HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
             lg.info(f"Start configuration {i}/{len(hyperparams)}")
@@ -77,8 +80,9 @@ class GridSearch:
 
             model = Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-            trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP, device=DEVICE)
-            train_loss, test_loss = trainer(TR_SET, TS_SET, epochs=epochs)
+            trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP, device=DEVICE,
+                              limit_eval=LIMIT_EVAL)
+            train_loss, test_loss = trainer(TR_SET, TS_SET, epochs=epochs, callbacks=[print_callback])
             translator = pipeline.create_translator(model, preprocessor)
             bleu_results = pipeline.bleu_evaluation(translator, dataset.data)
 

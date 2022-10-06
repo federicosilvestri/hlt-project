@@ -54,7 +54,8 @@ class TransformerTranslator:
             tokenizer_decoder: AutoTokenizer,
             max_length: int = 100,
             chunks: int = None,
-            device: str = 'cpu'
+            device: str = 'cpu',
+            limit_bleu = None
     ) -> None:
         """TransformerTranslator constructor.
 
@@ -71,6 +72,7 @@ class TransformerTranslator:
         self.max_length = max_length
         self.chunks = chunks
         self.device = device
+        self.limit_bleu = limit_bleu
 
     def __call__(self, src_sentence: str) -> str:
         """Method able to translate a given sentence.
@@ -133,7 +135,7 @@ class TransformerTranslator:
         """
         trgs, preds, trgs_tokens, preds_tokens = [], [], [], []
         if self.chunks is not None:
-            test_set = np.array_split(test_set, self.chunks)
+            test_set = np.array_split(test_set[:self.limit_bleu], self.chunks)
 
         with Parallel(n_jobs=-1, prefer="processes") as parallel:
             result_chunks = parallel(

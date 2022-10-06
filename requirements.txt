@@ -22,4 +22,4 @@ urllib3==1.26.12
 wget==3.2
 torchmetrics==0.9.3
 joblib==1.1.0
-matplotlib
+matplotlib==3.5.2

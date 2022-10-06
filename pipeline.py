@@ -63,7 +63,7 @@ class Pipeline:
             preprocessor = preprocessor_serializer.load()
         return preprocessor
 
-    def holdout(self, data, thresh_perd = HOLDOUT_VALID_FRACTION):
+    def holdout(self, data, thresh_perd=HOLDOUT_VALID_FRACTION):
         #
         # Hold out
         #
@@ -103,18 +103,20 @@ class Pipeline:
 
         return Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-    def train_model(self, model, TRG_INDEX_PAD, TR_SET, TS_SET, epochs=EPOCHS, clip=CLIP, learning_rate=LEARNING_RATE, callbacks=[]):
+    def train_model(self, model, TRG_INDEX_PAD, TR_SET, TS_SET, epochs=EPOCHS, clip=CLIP, learning_rate=LEARNING_RATE,
+                    callbacks=[]):
         #
         # Model training
         #
-        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip, device=DEVICE)
+        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip,
+                          device=DEVICE, limit_eval=LIMIT_EVAL)
         logging.info("Start model training")
         trainer(TR_SET, TS_SET, epochs=epochs, callbacks=callbacks)
         logging.info("End model training")
 
     def create_translator(self, model, preprocessor):
         return TransformerTranslator(model, preprocessor._tokenizer_,
-                                     preprocessor._tokenizer_, MAX_LENGTH, CHUNKS, DEVICE)
+                                     preprocessor._tokenizer_, MAX_LENGTH, CHUNKS, DEVICE, limit_bleu=LIMIT_BLEU)
 
     def translate(self, translator, dataset, limit=6):
         #
