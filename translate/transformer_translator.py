@@ -1,10 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple
 import torch
 from torch import nn
 from torchtext.data.metrics import bleu_score
 from torchmetrics import SacreBLEUScore
 from transformers import AutoTokenizer
-from joblib import Parallel, delayed
 import numpy as np
 
 
@@ -137,14 +137,13 @@ class TransformerTranslator:
         if self.chunks is not None:
             test_set = np.array_split(test_set[:self.limit_bleu], self.chunks)
 
-        with Parallel(n_jobs=-1, prefer="processes") as parallel:
-            result_chunks = parallel(
-                delayed(self.compute_test_set_chunk)(chunk)
-                for chunk in test_set
-            )
-            for trg_chunk, pred_chunk, trg_tokens_chunk, pred_tokens_chunk in result_chunks:
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.compute_test_set_chunk, chunk) for chunk in test_set]
+            for future in futures:
+                trg_chunk, pred_chunk, trg_tokens_chunk, pred_tokens_chunk = future.result()
                 trgs += trg_chunk
                 preds += pred_chunk
                 trgs_tokens += trg_tokens_chunk
                 preds_tokens += pred_tokens_chunk
+
         return TranslatedSet(trgs, preds, trgs_tokens, preds_tokens)

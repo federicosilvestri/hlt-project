@@ -1,13 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
 import typing as tp
-from joblib import Parallel, delayed
 import numpy as np
-
 from transformers import BertTokenizer
-
 from data import Dataset
 from utils import search_strategy
-
 
 class Preprocessor:
     def __init__(
@@ -74,13 +71,10 @@ class Preprocessor:
             train_strings = np.array_split(train_strings, self.chunks)
         else:
             train_strings = [train_strings]
-        
-        with Parallel(n_jobs=-1, prefer="processes") as parallel:
-            train_data_chunks = parallel(
-                delayed(self._preprocessing_)(train_str)
-                for train_str in train_strings
-            )
-            train_data = reduce(lambda x, y: x + y, train_data_chunks)
+
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings]
+            train_data = reduce(lambda x, y: x + y, [future.result() for future in futures])
         return train_data
 
     def execute(self):
