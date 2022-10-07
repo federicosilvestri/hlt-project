@@ -114,9 +114,9 @@ class Pipeline:
         trainer(TR_SET, TS_SET, epochs=epochs, callbacks=callbacks)
         logging.info("End model training")
 
-    def create_translator(self, model, preprocessor):
+    def create_translator(self, model, preprocessor, chunks=CHUNKS):
         return TransformerTranslator(model, preprocessor._tokenizer_,
-                                     preprocessor._tokenizer_, MAX_LENGTH, CHUNKS, DEVICE, limit_bleu=LIMIT_BLEU)
+                                     preprocessor._tokenizer_, MAX_LENGTH, chunks, DEVICE, limit_bleu=LIMIT_BLEU)
 
     def translate(self, translator, dataset, limit=6):
         #

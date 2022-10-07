@@ -149,7 +149,8 @@ class Trainer:
 
     def __call__(self, train_set: List[Tuple[torch.tensor, torch.tensor]],
                  test_set: List[Tuple[torch.tensor, torch.tensor]],
-                 epochs: int = 10, callbacks: List[Callable] = []) -> None:
+                 epochs: int = 10, callbacks: List[Callable] = [],
+                 save_model=True) -> None:
         """Main method of the class able to train the model.
 
         Args:
@@ -166,8 +167,9 @@ class Trainer:
             train_loss = self.train(mb_train_set)
             test_loss = self.evaluate_loss(test_set)
             end_time = time.time()
-            self.model.save_transformer()
             epoch_mins, epoch_secs = self.__epoch_time(start_time, end_time)
+            if save_model:
+                self.model.save_transformer()
             for callback in callbacks:
                 callback(self, epoch, train_loss, test_loss, (epoch_mins, epoch_secs))
         return train_loss, test_loss

@@ -3,8 +3,8 @@ import torch
 
 def search_strategy() -> str:
     """
-    Check if system has CPU, GPU or GPU.
-    Returns: 'cpu', 'cuda'
+    Check if system has CPU, GPU or MPS.
+    Returns: 'cpu', 'cuda', torch.device('mps')
     """
 
     # Detect hardware
