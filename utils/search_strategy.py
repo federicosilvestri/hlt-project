@@ -9,6 +9,10 @@ def search_strategy() -> str:
 
     # Detect hardware
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    try:
+        device = torch.device("mps") if torch.backends.mps.is_available() else device
+    except ValueError as e:
+        print(e)
     return device
 
 

@@ -51,11 +51,11 @@ BATCH_SIZE = 32
 EPOCHS = 10
 CLIP = 1
 LEARNING_RATE = 0.0005
-LIMIT_EVAL = None
+LIMIT_EVAL = 1000
 
 # Translator configuration
-MAX_LENGTH = 100
-LIMIT_BLEU = None
+MAX_LENGTH = 50
+LIMIT_BLEU = 50
 
 # Plot configuration
 PLOTS_DIR = GENERATED_FILE_DIR / "plots"

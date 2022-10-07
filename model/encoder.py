@@ -32,6 +32,7 @@ class Encoder(nn.Module):
 
     def forward(self, src, src_mask = None):
         # src = [batch size, src len]
+        src = src.to(self.device)
         src_len = src.shape[1]
         # pos = [batch size, src len]
         src = self.dropout((self.tok_embedding(src)) + self.pos_embedding(src_len))

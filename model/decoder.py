@@ -36,6 +36,7 @@ class Decoder(nn.Module):
         # trg = [batch size, trg len]
         # enc_src = [batch size, src len, hid dim]
         # trg_mask = [batch size, 1, trg len, trg len]
+        trg = trg.to(self.device)
         trg_len = trg.shape[1]
         # pos = [batch size, trg len]
         trg = self.dropout(

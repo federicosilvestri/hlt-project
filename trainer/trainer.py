@@ -85,8 +85,8 @@ class Trainer:
             # output = [batch size, trg len - 1, output dim]
             # trg = [batch size, trg len]
             output_dim = output.shape[-1]
-            output = output.contiguous().view(-1, output_dim)
-            trg = trg[:, 1:].contiguous().view(-1)
+            output = output.contiguous().view(-1, output_dim).to(self.device)
+            trg = trg[:, 1:].contiguous().view(-1).to(self.device)
             # output = [batch size * trg len - 1, output dim]
             # trg = [batch size * trg len - 1]
             loss = self.criterion(output, trg)
@@ -114,8 +114,8 @@ class Trainer:
                 # output = [batch size, trg len - 1, output dim]
                 # trg = [batch size, trg len]
                 output_dim = output.shape[-1]
-                output = output.contiguous().view(-1, output_dim)
-                trg = trg[:, 1:].contiguous().view(-1)
+                output = output.contiguous().view(-1, output_dim).to(self.device)
+                trg = trg[:, 1:].contiguous().view(-1).to(self.device)
                 # output = [batch size * trg len - 1, output dim]
                 # trg = [batch size * trg len - 1]
                 loss = self.criterion(output, trg)
@@ -139,8 +139,8 @@ class Trainer:
                 # output = [batch size, trg len - 1, output dim]
                 # trg = [batch size, trg len]
                 output_dim = output.shape[-1]
-                output = output.contiguous().view(-1, output_dim).argmax(-1)
-                trg = trg[:, 1:].contiguous().view(-1)
+                output = output.contiguous().view(-1, output_dim).argmax(-1).to(self.device)
+                trg = trg[:, 1:].contiguous().view(-1).to(self.device)
                 # output = [batch size * trg len - 1, output dim]
                 # trg = [batch size * trg len - 1]
                 accuracy = self.accuracy(output, trg)

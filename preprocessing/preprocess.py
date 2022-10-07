@@ -64,7 +64,7 @@ class Preprocessor:
         train_strings = []
         for src, trg in langs:
             train_strings += [
-                (f"[2{trg}] {replace_lang(src, k, v)}", replace_lang(trg, k, v))
+                (f"[2{trg}] {replace_lang(src, k, v)}", f"[CLS] {replace_lang(trg, k, v)} [SEP]")
                 for k, v in self._dataset_.data.items()
             ][: self._limit_]
         if self.chunks is not None:

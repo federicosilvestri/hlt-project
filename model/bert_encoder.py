@@ -21,8 +21,10 @@ class BERTEncoder(nn.Module):
 
         self.bert = BertModel(bert_config).to(device)
         self.bert.resize_token_embeddings(tokenizer_dim)
+        self.device = device
 
     def forward(self, src, src_mask=None):
+        src = src.to(self.device)
         src = src.view(src.shape[0], -1)
         src_mask = src_mask.view(src.shape[0], -1)
         out = self.bert(src, src_mask)
