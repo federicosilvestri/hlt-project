@@ -2,13 +2,12 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
 import typing as tp
 import numpy as np
-from transformers import BertTokenizer
 from data import Dataset
 from utils import search_strategy
 
 class Preprocessor:
     def __init__(
-        self, dataset: Dataset, max_length: int = 100, limit: tp.Optional[int] = None, chunks: int = None
+        self, dataset: Dataset, tokenizer, max_length: int = 100, limit: tp.Optional[int] = None, chunks: int = None
     ):
         # we need to implement the search strategy
         self._device_: str = search_strategy()
@@ -16,17 +15,7 @@ class Preprocessor:
         self._max_length_: int = max_length
         self._limit_ = limit if limit is not None else dataset.size
         self.chunks = chunks
-        self._tokenizer_ = BertTokenizer.from_pretrained(
-            "bert-base-multilingual-uncased"
-        )
-
-        langs = ["en", "it", "es", "de", "fr"]
-        langs_index = {}
-        self._tokenizer_.add_tokens([f"[2{lang}]" for lang in langs])
-        for lang in langs:
-            langs_index[lang] = self._tokenizer_.get_added_vocab()[f"[2{lang}]"]
-        self.trainable_data = None
-        self.zeroshot_data = None
+        self._tokenizer_ = tokenizer
 
     def _preprocessing_(self, train_strings):
         train_data = []
@@ -68,24 +57,16 @@ class Preprocessor:
                 for k, v in self._dataset_.data.items()
             ][: self._limit_]
         if self.chunks is not None:
-            train_strings = np.array_split(train_strings, self.chunks)
+            train_strings_chunks = np.array_split(train_strings, self.chunks)
         else:
-            train_strings = [train_strings]
+            train_strings_chunks = [train_strings]
 
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings]
+            futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings_chunks]
             train_data = reduce(lambda x, y: x + y, [future.result() for future in futures])
-        return train_data
+        return train_strings, train_data
 
-    def execute(self):
-        self.trainable_data = self._wrap_preprocessing_by_lang_(
-            [
-                ("en", "fr"),
-                ("en", "de"),
-                ("en", "es"),
-                ("fr", "it"),
-                ("de", "it"),
-                ("es", "it"),
-            ]
-        )
-        self.zeroshot_data = self._wrap_preprocessing_by_lang_([("en", "it")])
+    def execute(self, base_lang_config, zeroshot_lang_cnfig):
+        base_data = self._wrap_preprocessing_by_lang_(base_lang_config)
+        zeroshot_data = self._wrap_preprocessing_by_lang_(zeroshot_lang_cnfig)
+        return base_data, zeroshot_data

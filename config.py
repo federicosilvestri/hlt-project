@@ -4,6 +4,7 @@ import random
 import torch
 import numpy as np
 from utils import search_strategy
+from transformers import BertTokenizer
 
 GENERATED_FILE_DIR = Path(__file__).parent / "generated"
 if not GENERATED_FILE_DIR.exists():
@@ -13,12 +14,39 @@ if not GENERATED_FILE_DIR.exists():
 DATASET_URL = "https://github.com/federicosilvestri/hlt-parallel-dataset/blob/master/processed/parallel.json?raw=true"
 DATASET_DOWNLOAD_DIR = GENERATED_FILE_DIR / "dataset"
 DATASET_FILE_NAME = "dataset.json"
-DATASET_CUT = 6
+DATASET_CUT = 12
 
 # Preprocessor Serializer
+TOKENIZER = BertTokenizer.from_pretrained("bert-base-multilingual-uncased")
+TOKENIZER.add_tokens([f"[2{lang}]" for lang in ["en", "it", "es", "de", "fr"]])
+VOCAB_SIZE = len(TOKENIZER)
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
 PREPROCESSOR_FILE_NAME = "preprocessor.pickle"
 CHUNKS = 32
+BASE_LANG_CONFIG = [
+    ("en", "it"),
+    ("en", "es"),
+    ("en", "de"),
+    ("en", "fr"),
+    ("it", "en"),
+    ("es", "en"),
+    ("de", "en"),
+    ("fr", "en"),
+]
+ZEROSHOT_LANG_CONFIG = [
+    ("fr", "it"),
+    ("fr", "es"),
+    ("fr", "de"),
+    ("it", "fr"),
+    ("es", "fr"),
+    ("de", "fr"),
+    ("it", "es"),
+    ("it", "de"),
+    ("es", "it"),
+    ("de", "it"),
+    ("es", "de"),
+    ("de", "es"),
+]
 
 # Random setting
 SEED = 1234
@@ -32,7 +60,7 @@ torch.backends.cudnn.deterministic = True
 DEVICE = search_strategy()
 
 # Model configuration
-PRETRAINED = False
+PRETRAINED_TYPE = None
 HID_DIM = 256
 ENC_LAYERS = 3
 DEC_LAYERS = 3
@@ -42,7 +70,7 @@ ENC_PF_DIM = 512
 DEC_PF_DIM = 512
 ENC_DROPOUT = 0.1
 DEC_DROPOUT = 0.1
-MODEL_DIR = GENERATED_FILE_DIR / "model" 
+MODEL_DIR = GENERATED_FILE_DIR / "model"
 MODEL_FILE_NAME = "zero_shot_nmt.torch"
 
 # Trainer configuration

@@ -3,6 +3,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 
+from data.structured_dataset import StructuredDataset
 from translate.transformer_translator import TransformerTranslator
 
 
@@ -39,46 +40,47 @@ class PlotHandler:
 
 
 class PlotHandlerFactory:
-    def __init__(self, plots_dir):
+    def __init__(self, plots_dir, structured_dataset: StructuredDataset):
         self.plots_dir = plots_dir
         self.plot_handlers: List[PlotHandler] = []
-    def create_celoss_plot(self, zs_trainset, zs_testset):
+        self.structured_dataset = structured_dataset
+    def create_celoss_plot(self):
         plot_handler = PlotHandler('celoss', self.plots_dir, "celoss_plot.png", [
             lambda trainer, epoch, loss_train, loss_val: loss_train,
             lambda trainer, epoch, loss_train, loss_val: loss_val,
-            lambda trainer, epoch, loss_train, loss_val: trainer.evaluate_loss(zs_trainset),
-            lambda trainer, epoch, loss_train, loss_val: trainer.evaluate_loss(zs_testset),
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.loss,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.loss,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler
 
-    def create_accuracy_plot(self, trainnset, testset, zs_trainset, zs_testset):
+    def create_accuracy_plot(self):
         plot_handler = PlotHandler('accuracy', self.plots_dir, "accuracy_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: trainer.evaluate_metric(trainnset),
-            lambda trainer, epoch, loss_train, loss_val: trainer.evaluate_metric(testset),
-            lambda trainer, epoch, loss_train, loss_val: trainer.evaluate_metric(zs_trainset),
-            lambda trainer, epoch, loss_train, loss_val: trainer.evaluate_metric(zs_testset),
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.train.accuracy,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.test.accuracy,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.accuracy,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.accuracy,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler
 
 
-    def create_bleu_plot(self, translator: TransformerTranslator, trainnset, testset, zs_trainset, zs_testset):
+    def create_bleu_plot(self):
         plot_handler = PlotHandler('bleu', self.plots_dir, "bleu_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(trainnset).bleu(),
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(testset).bleu(),
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(zs_trainset).bleu(),
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(zs_testset).bleu(),
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.train.bleu,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.test.bleu,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.bleu,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.bleu,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler
 
-    def create_sacrebleu_plot(self, translator: TransformerTranslator, trainnset, testset, zs_trainset, zs_testset):
+    def create_sacrebleu_plot(self):
         plot_handler = PlotHandler('sacrebleu', self.plots_dir, "sacrebleu_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(trainnset).sacre_bleu(),
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(testset).sacre_bleu(),
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(zs_trainset).sacre_bleu(),
-            lambda trainer, epoch, loss_train, loss_val: translator.create_translatedset(zs_testset).sacre_bleu(),
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.train.sacrebleu,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.test.sacrebleu,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.sacrebleu,
+            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.sacrebleu,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler

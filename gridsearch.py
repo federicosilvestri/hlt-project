@@ -1,8 +1,10 @@
+import math
 from itertools import product
 import json
 from threading import Thread
 
 from config import *
+from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
 from model.decoder import Decoder
 from model.encoder import Encoder
@@ -17,9 +19,9 @@ from trainer.trainer_callbacks import print_epoch_loss_accuracy
 
 
 class Hyperparameters:
-    HID_DIM = [256, 512, 768]
-    ENC_LAYERS = [3, 6, None]
-    DEC_LAYERS = [3, 6, 8]
+    HID_DIM = [256, 768]
+    ENC_LAYERS = [3, 'bert-base-multilingual-cased', 'distilbert-base-multilingual-cased']
+    DEC_LAYERS = [3, 6]
     ENC_PF_DIM = [512]
     DEC_PF_DIM = [512]
     LEARNING_RATE = [0.0005]
@@ -48,19 +50,18 @@ class GridSearch:
                 json.dump(gs_dict, fp)
             self.gs_dicts.append(gs_dict)
 
-    def __train_chunk(self, n_chunk, TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs, pipeline, hyperparams, preprocessor,
-                      dataset):
+    def __train_chunk(self, n_chunk, structured_dataset: StructuredDataset, epochs, pipeline, hyperparams):
         i = 0
-        print_callback = print_epoch_loss_accuracy(TR_SET, TS_SET, accuracy=False)
+        print_callback = print_epoch_loss_accuracy(structured_dataset)
         for HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
             lg.info(f"CHUNK {n_chunk} - Start configuration {i}/{len(hyperparams)}")
 
-            INPUT_DIM = len(preprocessor._tokenizer_)
-            OUTPUT_DIM = len(preprocessor._tokenizer_)
+            INPUT_DIM = VOCAB_SIZE
+            OUTPUT_DIM = VOCAB_SIZE
 
-            if ENC_LAYERS is None:
-                enc = BERTEncoder(HID_DIM, ENC_HEADS, len(preprocessor._tokenizer_), DEVICE)
+            if type(ENC_LAYERS) == str:
+                enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, DEVICE, type=ENC_LAYERS)
             else:
                 enc = Encoder(INPUT_DIM,
                               HID_DIM,
@@ -80,15 +81,18 @@ class GridSearch:
 
             model = Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-            trainer = Trainer(model, preprocessor._tokenizer_.vocab['pad'], LEARNING_RATE, clip=CLIP, device=DEVICE,
+            trainer = Trainer(model, TOKENIZER.vocab['pad'], LEARNING_RATE, clip=CLIP, device=DEVICE,
                               limit_eval=LIMIT_EVAL)
-            train_loss, test_loss = trainer(TR_SET, TS_SET, epochs=epochs, callbacks=[print_callback], save_model=True)
-            translator = pipeline.create_translator(model, preprocessor)
-            bleu_results = pipeline.bleu_evaluation(translator, dataset.data)
-
+            translator = pipeline.create_translator(model)
+            trainer(
+                structured_dataset.baseset.train.tokens_id,
+                structured_dataset.baseset.test.tokens_id,
+                epochs=epochs, callbacks=[
+                    structured_dataset.model_callback(translator),
+                    print_callback
+                ], save_model=False)
             gs_dict_iter = {
                 "hyperparams": {
-                    "PRETRAINED": PRETRAINED,
                     "HID_DIM": HID_DIM,
                     "ENC_LAYERS": ENC_LAYERS,
                     "DEC_LAYERS": DEC_LAYERS,
@@ -97,19 +101,7 @@ class GridSearch:
                     "LEARNING_RATE": LEARNING_RATE,
                     "CLIP": CLIP
                 },
-                "loss": {
-                    "train": train_loss,
-                    "test": test_loss,
-                    "zeroshot_train": trainer.evaluate_loss(ZS_TR_SET),
-                    "zeroshot_test": trainer.evaluate_loss(ZS_TS_SET)
-                },
-                "accuracy": {
-                    "train": trainer.evaluate_metric(TR_SET),
-                    "test": trainer.evaluate_metric(TS_SET),
-                    "zeroshot_train": trainer.evaluate_metric(ZS_TR_SET),
-                    "zeroshot_test": trainer.evaluate_metric(ZS_TS_SET)
-                },
-                "metric": bleu_results
+                "structured_dataset": structured_dataset.to_dict(trainer, translator)
             }
             with open(f'{self.gs_files[n_chunk]}', 'w') as fp:
                 self.gs_dicts[n_chunk].append(gs_dict_iter)
@@ -118,9 +110,8 @@ class GridSearch:
     def train(self, epochs=10):
         pipeline = Pipeline()
         dataset = pipeline.dataset_load()
-        preprocessor = pipeline.preprocess(dataset)
-        TR_SET, TS_SET = pipeline.holdout(preprocessor.trainable_data)
-        ZS_TR_SET, ZS_TS_SET = pipeline.holdout(preprocessor.zeroshot_data)
+        structured_dataset = pipeline.preprocess(dataset)
+        lg.info(f"Structured dataset sizes\n{structured_dataset.sizes()}")
         hyperparams = list(product(
             self.hyperparameters.HID_DIM,
             self.hyperparameters.ENC_LAYERS,
@@ -131,19 +122,19 @@ class GridSearch:
             self.hyperparameters.CLIP,
         ))
         lg.info(f"CHUNKS {self.n_chunks} for {len(hyperparams)} configurations")
-        hyperparams_chunks = np.array_split(hyperparams, self.n_chunks)
+        hyperparams_chunks = [[] for _ in range(self.n_chunks)]
+        for i, hyperparam in enumerate(hyperparams):
+            hyperparams_chunks[i % self.n_chunks].append(hyperparam)
         threads = []
         for n_chunk, hyperparams_chunk in enumerate(hyperparams_chunks):
             thread = Thread(
                 target=self.__train_chunk,
-                args=(n_chunk, TR_SET, TS_SET, ZS_TR_SET, ZS_TS_SET, epochs, pipeline, hyperparams_chunk, preprocessor,
-                      dataset)
+                args=(n_chunk, structured_dataset, epochs, pipeline, hyperparams_chunk)
             )
             thread.start()
             threads.append(thread)
         for thread in threads:
             thread.join()
-
 
 
 if __name__ == "__main__":

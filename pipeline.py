@@ -1,3 +1,5 @@
+from data.serializer import SDSerializer
+from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
 from translate.transformer_translator import TransformerTranslator
@@ -10,8 +12,7 @@ import sys
 
 from config import *
 from data import Dataset, DatasetDownloader
-from preprocessing import Preprocessor, PreprocessSerializer
-from utils.plot_handler import PlotHandler
+from preprocessing import Preprocessor
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -45,45 +46,36 @@ class Pipeline:
         #
         # Execute preprocessing
         #
-        preprocessor_serializer = PreprocessSerializer(
+        serializer = SDSerializer(
             file_name=PREPROCESSOR_FILE_NAME, file_dir=PREPROCESSOR_DIR
         )
 
-        if not preprocessor_serializer.exists():
+        if not serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, max_length=MAX_LENGTH, chunks=CHUNKS, limit=limit)
+            preprocessor = Preprocessor(dataset=dataset, tokenizer=TOKENIZER, max_length=MAX_LENGTH, chunks=CHUNKS,
+                                        limit=limit)
             # executing preprocessing
-            preprocessor.execute()
+            base_lang_config, zeroshot_lang_config = preprocessor.execute(BASE_LANG_CONFIG, ZEROSHOT_LANG_CONFIG)
+            structured_dataset = StructuredDataset(base_lang_config, zeroshot_lang_config, HOLDOUT_VALID_FRACTION)
 
             # saving
             logging.info("Saving preprocessor into file")
-            preprocessor_serializer.serialize(preprocessor)
+            serializer.serialize(structured_dataset)
         else:
             logging.info("Loading preprocessor from file")
-            preprocessor = preprocessor_serializer.load()
-        return preprocessor
+            structured_dataset = serializer.load()
+        return structured_dataset
 
-    def holdout(self, data, thresh_perd=HOLDOUT_VALID_FRACTION):
-        #
-        # Hold out
-        #
-        logging.info("Splitting dataset in hold out way")
-        train_data_size = len(data)
-        threshold = int(train_data_size - train_data_size * thresh_perd)
-        TR_SET = data[:threshold]
-        TS_SET = data[threshold:]
-        return TR_SET, TS_SET
-
-    def model_creation(self, preprocessor):
+    def model_creation(self):
         #
         # Model creaton
         #
         logging.info("Transformer creation")
-        INPUT_DIM = len(preprocessor._tokenizer_)
-        OUTPUT_DIM = len(preprocessor._tokenizer_)
+        INPUT_DIM = VOCAB_SIZE
+        OUTPUT_DIM = VOCAB_SIZE
 
-        if PRETRAINED:
-            enc = BERTEncoder(HID_DIM, ENC_HEADS, len(preprocessor._tokenizer_), DEVICE)
+        if PRETRAINED_TYPE is not None:
+            enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, DEVICE, type=PRETRAINED_TYPE)
         else:
             enc = Encoder(INPUT_DIM,
                           HID_DIM,
@@ -103,7 +95,8 @@ class Pipeline:
 
         return Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
 
-    def train_model(self, model, TRG_INDEX_PAD, TR_SET, TS_SET, epochs=EPOCHS, clip=CLIP, learning_rate=LEARNING_RATE,
+    def train_model(self, model, TRG_INDEX_PAD, structured_dataset: StructuredDataset, epochs=EPOCHS, clip=CLIP,
+                    learning_rate=LEARNING_RATE,
                     callbacks=[]):
         #
         # Model training
@@ -111,19 +104,19 @@ class Pipeline:
         trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip,
                           device=DEVICE, limit_eval=LIMIT_EVAL)
         logging.info("Start model training")
-        trainer(TR_SET, TS_SET, epochs=epochs, callbacks=callbacks)
+        trainer(structured_dataset.baseset.train.tokens_id, structured_dataset.baseset.test.tokens_id, epochs=epochs,
+                callbacks=callbacks)
         logging.info("End model training")
 
-    def create_translator(self, model, preprocessor, chunks=CHUNKS):
-        return TransformerTranslator(model, preprocessor._tokenizer_,
-                                     preprocessor._tokenizer_, MAX_LENGTH, chunks, DEVICE, limit_bleu=LIMIT_BLEU)
+    def create_translator(self, model, tokenizer=TOKENIZER, chunks=CHUNKS):
+        return TransformerTranslator(model, tokenizer, tokenizer, MAX_LENGTH, chunks, DEVICE, limit_bleu=LIMIT_BLEU)
 
-    def translate(self, translator, dataset, limit=6):
+    def translate(self, translator, structured_dataset: StructuredDataset, limit=6):
         #
         # Translation of some sentences
         #
-        ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.data.items())[:limit]]
-        ZS_TRAIN, ZS_TEST = self.holdout(ZERO_SHOT_SET, thresh_perd=0.5)
+        ZS_TRAIN = structured_dataset.zeroshotset.train.labels[:limit]
+        ZS_TEST = structured_dataset.zeroshotset.test.labels[:limit]
 
         logging.info("Printing some sentances translation in zero-shot train and test way")
         for key, value in ZS_TRAIN + ZS_TEST:
@@ -132,47 +125,3 @@ class Pipeline:
             print(f'OUT: {value}')
             print(f'PRED: {pred}')
             print()
-
-    def bleu_evaluation(self, translator, dataset, limit=None):
-        ZERO_SHOT_SET = [(f"[2it] {key}", value['it']) for key, value in list(dataset.items())]
-        DATA_SET = [(f"[2fr] {key}", value['fr']) for key, value in list(dataset.items())] + \
-                   [(f"[2de] {key}", value['de']) for key, value in list(dataset.items())] + \
-                   [(f"[2es] {key}", value['es']) for key, value in list(dataset.items())] + \
-                   [(f"[2it] {value['fr']}", value['it']) for key, value in list(dataset.items())] + \
-                   [(f"[2it] {value['de']}", value['it']) for key, value in list(dataset.items())] + \
-                   [(f"[2it] {value['es']}", value['it']) for key, value in list(dataset.items())]
-        DT_TRAIN, DT_TEST = self.holdout(DATA_SET)
-        ZS_TRAIN, ZS_TEST = self.holdout(ZERO_SHOT_SET)
-        if limit is not None:
-            DT_TRAIN = DT_TRAIN[:limit]
-            DT_TEST = DT_TEST[:limit]
-            ZS_TRAIN = ZS_TRAIN[:limit]
-            ZS_TEST = ZS_TEST[:limit]
-        test_sets = [
-            ("zeroshot_test", ZS_TEST),
-            ("zeroshot_train", ZS_TRAIN),
-            ("dataset_test", DT_TEST),
-            ("dataset_train", DT_TRAIN),
-        ]
-        #
-        # Evaluation of model using BLEU and sacreBLEU
-        #
-        results = {}
-        for label, test_set in test_sets:
-            logging.info(f"Translated set {label} creation")
-            translated_set = translator.create_translatedset(test_set)
-
-            logging.info("BLEU score computation")
-            bleu_score = translated_set.bleu()
-            print(f'BLEU score {label} = {bleu_score * 100:.2f}%')
-
-            logging.info("sacreBLEU score computation")
-            sacre_bleu_score = translated_set.sacre_bleu()
-
-            print(f'sacreBLEU score {label} = {sacre_bleu_score * 100:.2f}%')
-
-            results[label] = {
-                "BLEU": bleu_score,
-                "sacreBLEU": sacre_bleu_score
-            }
-        return results

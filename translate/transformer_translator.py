@@ -2,46 +2,10 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple
 import torch
 from torch import nn
-from torchtext.data.metrics import bleu_score
-from torchmetrics import SacreBLEUScore
 from transformers import AutoTokenizer
 import numpy as np
 
-
-class TranslatedSet:
-    """Class able to provide methods to evaluate the goodness of the model on NMT."""
-
-    def __init__(self, trgs: List[str], pred: List[str], trgs_tokens: List[List[str]],
-                 pred_tokens: List[List[str]]) -> None:
-        """TranslatedSet constructor.
-
-        Args:
-            trgs (List[str]): Targets.
-            pred (List[str]): Predictions.
-            trgs_tokens (List[List[str]]): Tokens of targets.
-            pred_tokens (List[List[str]]): Tokens of predictions.
-        """
-        self.trgs = trgs
-        self.pred = pred
-        self.trgs_tokens = trgs_tokens
-        self.pred_tokens = pred_tokens
-
-    def bleu(self) -> float:
-        """Method used to compute bleu score.
-
-        Returns:
-            float: BLEU score.
-        """
-        return bleu_score(self.pred_tokens, self.trgs_tokens)
-
-    def sacre_bleu(self) -> float:
-        """Method used to compute sacre bleu score.
-
-        Returns:
-            float: sacre BLEU score.
-        """
-        metric = SacreBLEUScore()
-        return metric(self.pred, self.trgs).item()
+from data.structured_dataset import TranslatedSet
 
 
 class TransformerTranslator:

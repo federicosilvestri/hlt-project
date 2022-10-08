@@ -11,10 +11,11 @@ class BERTEncoder(nn.Module):
                  pf_dim,
                  tokenizer_dim,
                  device,
+                 type='bert-base-multilingual-cased'
                  ):
         super().__init__()
 
-        bert_config = BertConfig.from_pretrained('bert-base-multilingual-uncased')
+        bert_config = BertConfig.from_pretrained(type)
 
         bert_config.hidden_size = hid_dim
         bert_config.num_attention_heads = pf_dim
@@ -25,7 +26,5 @@ class BERTEncoder(nn.Module):
 
     def forward(self, src, src_mask=None):
         src = src.to(self.device)
-        src = src.view(src.shape[0], -1)
-        src_mask = src_mask.view(src.shape[0], -1)
         out = self.bert(src, src_mask)
         return out[0]
