@@ -134,9 +134,9 @@ class StructuredDataset:
                f"\nzeroshot\n\ttrain: {len(self.zeroshotset.train.tokens_id)}\n\ttest: {len(self.zeroshotset.test.tokens_id)}"
 
     def to_dict(self, trainer, translator):
-        #self.compute_zeroshot_loss(trainer)
-        #self.compute_accuracy(trainer)
-        #self.compute_bleu(translator)
+        self.compute_zeroshot_loss(trainer)
+        self.compute_accuracy(trainer)
+        self.compute_bleu(translator)
         return {
             'baseset': {
                 'train': {
