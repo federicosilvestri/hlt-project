@@ -53,6 +53,7 @@ class GridSearch:
     def __train_chunk(self, n_chunk, structured_dataset: StructuredDataset, epochs, pipeline, hyperparams):
         i = 0
         print_callback = print_epoch_loss_accuracy(structured_dataset)
+        device = f'{DEVICE}:{n_chunk}' if DEVICE == 'cuda' else DEVICE
         for HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
             lg.info(f"CHUNK {n_chunk} - Start configuration {i}/{len(hyperparams)}")
@@ -61,7 +62,7 @@ class GridSearch:
             OUTPUT_DIM = VOCAB_SIZE
 
             if type(ENC_LAYERS) == str:
-                enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, DEVICE, type=ENC_LAYERS)
+                enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=ENC_LAYERS)
             else:
                 enc = Encoder(INPUT_DIM,
                               HID_DIM,
@@ -69,7 +70,7 @@ class GridSearch:
                               ENC_HEADS,
                               ENC_PF_DIM,
                               ENC_DROPOUT,
-                              DEVICE)
+                              device)
 
             dec = Decoder(OUTPUT_DIM,
                           HID_DIM,
@@ -77,11 +78,11 @@ class GridSearch:
                           DEC_HEADS,
                           DEC_PF_DIM,
                           DEC_DROPOUT,
-                          DEVICE)
+                          device)
 
-            model = Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
+            model = Transformer(enc, dec, device, MODEL_DIR, MODEL_FILE_NAME).to(device)
 
-            trainer = Trainer(model, TOKENIZER.vocab['pad'], LEARNING_RATE, clip=CLIP, device=DEVICE,
+            trainer = Trainer(model, TOKENIZER.vocab['pad'], LEARNING_RATE, clip=CLIP, device=device,
                               limit_eval=LIMIT_EVAL)
             translator = pipeline.create_translator(model)
             trainer(
