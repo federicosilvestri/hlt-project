@@ -42,7 +42,7 @@ class Pipeline:
         logging.info("Loading dataset")
         return Dataset(dataset_downloader.downloaded_file, cut=DATASET_CUT)
 
-    def preprocess(self, dataset, limit=None):
+    def preprocess(self, dataset, limit=None, device=DEVICE):
         #
         # Execute preprocessing
         #
@@ -53,7 +53,7 @@ class Pipeline:
         if not serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
             preprocessor = Preprocessor(dataset=dataset, tokenizer=TOKENIZER, max_length=MAX_LENGTH, chunks=CHUNKS,
-                                        limit=limit)
+                                        limit=limit, device=device)
             # executing preprocessing
             base_lang_config, zeroshot_lang_config = preprocessor.execute(BASE_LANG_CONFIG, ZEROSHOT_LANG_CONFIG)
             structured_dataset = StructuredDataset(base_lang_config, zeroshot_lang_config, HOLDOUT_VALID_FRACTION)

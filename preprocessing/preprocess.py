@@ -7,10 +7,10 @@ from utils import search_strategy
 
 class Preprocessor:
     def __init__(
-        self, dataset: Dataset, tokenizer, max_length: int = 100, limit: tp.Optional[int] = None, chunks: int = None
+        self, dataset: Dataset, tokenizer, device, max_length: int = 100, limit: tp.Optional[int] = None, chunks: int = None
     ):
         # we need to implement the search strategy
-        self._device_: str = search_strategy()
+        self._device_: str = device
         self._dataset_ = dataset
         self._max_length_: int = max_length
         self._limit_ = limit if limit is not None else dataset.size
