@@ -84,7 +84,7 @@ class GridSearch:
 
             trainer = Trainer(model, TOKENIZER.vocab['pad'], LEARNING_RATE, clip=CLIP, device=device,
                               limit_eval=LIMIT_EVAL)
-            translator = pipeline.create_translator(model)
+            translator = pipeline.create_translator(model, device=device)
             trainer(
                 structured_dataset.baseset.train.tokens_id,
                 structured_dataset.baseset.test.tokens_id,

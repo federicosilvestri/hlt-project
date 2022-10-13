@@ -66,7 +66,7 @@ class Pipeline:
             structured_dataset = serializer.load()
         return structured_dataset
 
-    def model_creation(self):
+    def model_creation(self, device=DEVICE):
         #
         # Model creaton
         #
@@ -75,7 +75,7 @@ class Pipeline:
         OUTPUT_DIM = VOCAB_SIZE
 
         if PRETRAINED_TYPE is not None:
-            enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, DEVICE, type=PRETRAINED_TYPE)
+            enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=PRETRAINED_TYPE)
         else:
             enc = Encoder(INPUT_DIM,
                           HID_DIM,
@@ -83,7 +83,7 @@ class Pipeline:
                           ENC_HEADS,
                           ENC_PF_DIM,
                           ENC_DROPOUT,
-                          DEVICE)
+                          device)
 
         dec = Decoder(OUTPUT_DIM,
                       HID_DIM,
@@ -91,25 +91,25 @@ class Pipeline:
                       DEC_HEADS,
                       DEC_PF_DIM,
                       DEC_DROPOUT,
-                      DEVICE)
+                      device)
 
-        return Transformer(enc, dec, DEVICE, MODEL_DIR, MODEL_FILE_NAME).to(DEVICE)
+        return Transformer(enc, dec, device, MODEL_DIR, MODEL_FILE_NAME).to(device)
 
     def train_model(self, model, TRG_INDEX_PAD, structured_dataset: StructuredDataset, epochs=EPOCHS, clip=CLIP,
                     learning_rate=LEARNING_RATE,
-                    callbacks=[]):
+                    callbacks=[], device=DEVICE):
         #
         # Model training
         #
         trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip,
-                          device=DEVICE, limit_eval=LIMIT_EVAL)
+                          device=device, limit_eval=LIMIT_EVAL)
         logging.info("Start model training")
         trainer(structured_dataset.baseset.train.tokens_id, structured_dataset.baseset.test.tokens_id, epochs=epochs,
                 callbacks=callbacks)
         logging.info("End model training")
 
-    def create_translator(self, model, tokenizer=TOKENIZER, chunks=CHUNKS):
-        return TransformerTranslator(model, tokenizer, tokenizer, MAX_LENGTH, chunks, DEVICE, limit_bleu=LIMIT_BLEU)
+    def create_translator(self, model, tokenizer=TOKENIZER, chunks=CHUNKS, device=DEVICE):
+        return TransformerTranslator(model, tokenizer, tokenizer, MAX_LENGTH, chunks, device, limit_bleu=LIMIT_BLEU)
 
     def translate(self, translator, structured_dataset: StructuredDataset, limit=6):
         #
