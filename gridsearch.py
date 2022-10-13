@@ -89,7 +89,6 @@ class GridSearch:
                 structured_dataset.baseset.train.tokens_id,
                 structured_dataset.baseset.test.tokens_id,
                 epochs=epochs, callbacks=[
-                    structured_dataset.model_callback(translator),
                     print_callback
                 ], save_model=False)
             gs_dict_iter = {
@@ -123,19 +122,22 @@ class GridSearch:
             self.hyperparameters.CLIP,
         ))
         lg.info(f"CHUNKS {self.n_chunks} for {len(hyperparams)} configurations")
-        hyperparams_chunks = [[] for _ in range(self.n_chunks)]
-        for i, hyperparam in enumerate(hyperparams):
-            hyperparams_chunks[i % self.n_chunks].append(hyperparam)
-        threads = []
-        for n_chunk, hyperparams_chunk in enumerate(hyperparams_chunks):
-            thread = Thread(
-                target=self.__train_chunk,
-                args=(n_chunk, structured_dataset, epochs, pipeline, hyperparams_chunk)
-            )
-            thread.start()
-            threads.append(thread)
-        for thread in threads:
-            thread.join()
+        if self.n_chunks == 1:
+            self.__train_chunk(0, structured_dataset, epochs, pipeline, hyperparams)
+        else:
+            hyperparams_chunks = [[] for _ in range(self.n_chunks)]
+            for i, hyperparam in enumerate(hyperparams):
+                hyperparams_chunks[i % self.n_chunks].append(hyperparam)
+            threads = []
+            for n_chunk, hyperparams_chunk in enumerate(hyperparams_chunks):
+                thread = Thread(
+                    target=self.__train_chunk,
+                    args=(n_chunk, structured_dataset, epochs, pipeline, hyperparams_chunk)
+                )
+                thread.start()
+                threads.append(thread)
+            for thread in threads:
+                thread.join()
 
 
 if __name__ == "__main__":
