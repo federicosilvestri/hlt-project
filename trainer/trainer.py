@@ -159,17 +159,27 @@ class Trainer:
             epochs (int, optional): Number of time that the train process is repeated.
             callbacks (List[Callable], optional): List of callbacks called after each epoch.
         """
-        lg.info("Start training")
+        lg.info("start training")
         for epoch in range(epochs):
+            lg.info(f"Start epoch {epoch}")
             start_time = time.time()
             random.shuffle(train_set)
             mb_train_set = self.__create_batches(train_set)
+            lg.info(f"Start train epoch {epoch}")
             train_loss = self.train(mb_train_set)
+            lg.info(f"Stop train epoch {epoch}")
+            lg.info(f"Start evaluation epoch {epoch}")
             test_loss = self.evaluate_loss(test_set)
+            lg.info(f"Stop evaluation epoch {epoch}")
             end_time = time.time()
             epoch_mins, epoch_secs = self.__epoch_time(start_time, end_time)
             if save_model:
                 self.model.save_transformer()
-            for callback in callbacks:
+            lg.info(f"Start callbacks epoch {epoch}")
+            for i, callback in enumerate(callbacks):
+                lg.info(f"Start callback {i} epoch {epoch}")
                 callback(self, epoch, train_loss, test_loss, (epoch_mins, epoch_secs))
+                lg.info(f"Stop callback {i} epoch {epoch}")
+            lg.info(f"Stop callbacks epoch {epoch}")
+        lg.info(f"Stop epoch {epoch}")
         return train_loss, test_loss

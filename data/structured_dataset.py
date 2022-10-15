@@ -130,10 +130,12 @@ class StructuredDataset:
             self.__zeroshotset__.test.translated_set = translator.create_translatedset(self.__zeroshotset__.test.labels)
 
     def sizes(self):
-        return f"baseset\n\ttrain: {len(self.baseset.train.tokens_id)}\n\ttest:{len(self.baseset.test.tokens_id)}" \
+        return f"baseset\n\ttrain: {len(self.baseset.train.tokens_id)}\n\ttest: {len(self.baseset.test.tokens_id)}" \
                f"\nzeroshot\n\ttrain: {len(self.zeroshotset.train.tokens_id)}\n\ttest: {len(self.zeroshotset.test.tokens_id)}"
 
     def to_dict(self, trainer, translator):
+        self.__baseset__.train.loss = trainer.evaluate_loss(self.__baseset__.train.tokens_id)
+        self.__baseset__.test.loss = trainer.evaluate_loss(self.__baseset__.test.tokens_id)
         self.compute_zeroshot_loss(trainer)
         self.compute_accuracy(trainer)
         self.compute_bleu(translator)
