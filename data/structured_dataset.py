@@ -2,6 +2,7 @@ from typing import List
 
 from torchmetrics import SacreBLEUScore
 from torchtext.data import bleu_score
+import logging as lg
 
 
 class TranslatedSet:
@@ -112,30 +113,54 @@ class StructuredDataset:
         return callback
 
     def compute_zeroshot_loss(self, trainer):
+        lg.info(f"Start zeroshot train loss evaluation")
         self.__zeroshotset__.train.loss = trainer.evaluate_loss(self.__zeroshotset__.train.tokens_id)
+        lg.info(f"Stop zeroshot train loss evaluation")
+        lg.info(f"Start zeroshot test loss evaluation")
         self.__zeroshotset__.test.loss = trainer.evaluate_loss(self.__zeroshotset__.test.tokens_id)
+        lg.info(f"Stop zeroshot test loss evaluation")
 
     def compute_accuracy(self, trainer, zeroshot=True):
+        lg.info(f"Start baseset train accuracy evaluation")
         self.__baseset__.train.accuracy = trainer.evaluate_metric(self.__baseset__.train.tokens_id)
+        lg.info(f"Stop baseset train accuracy evaluation")
+        lg.info(f"Start baseset test accuracy evaluation")
         self.__baseset__.test.accuracy = trainer.evaluate_metric(self.__baseset__.test.tokens_id)
+        lg.info(f"Stop baseset test accuracy evaluation")
         if zeroshot:
+            lg.info(f"Start zeroshot train accuracy evaluation")
             self.__zeroshotset__.train.accuracy = trainer.evaluate_metric(self.__zeroshotset__.train.tokens_id)
+            lg.info(f"Stop zeroshot train accuracy evaluation")
+            lg.info(f"Start zeroshot test accuracy evaluation")
             self.__zeroshotset__.test.accuracy = trainer.evaluate_metric(self.__zeroshotset__.test.tokens_id)
+            lg.info(f"Stop zeroshot test accuracy evaluation")
 
     def compute_bleu(self, translator, zeroshot=True):
+        lg.info(f"Start baseset train create_translatedset evaluation")
         self.__baseset__.train.translated_set = translator.create_translatedset(self.__baseset__.train.labels)
+        lg.info(f"Stop baseset train create_translatedset evaluation")
+        lg.info(f"Start baseset test create_translatedset evaluation")
         self.__baseset__.test.translated_set = translator.create_translatedset(self.__baseset__.test.labels)
+        lg.info(f"Stop baseset test create_translatedset evaluation")
         if zeroshot:
+            lg.info(f"Start zeroshot train create_translatedset evaluation")
             self.__zeroshotset__.train.translated_set = translator.create_translatedset(self.__zeroshotset__.train.labels)
+            lg.info(f"Stop zeroshot train create_translatedset evaluation")
+            lg.info(f"Start zeroshot test create_translatedset evaluation")
             self.__zeroshotset__.test.translated_set = translator.create_translatedset(self.__zeroshotset__.test.labels)
+            lg.info(f"Stop zeroshot test create_translatedset evaluation")
 
     def sizes(self):
         return f"baseset\n\ttrain: {len(self.baseset.train.tokens_id)}\n\ttest: {len(self.baseset.test.tokens_id)}" \
                f"\nzeroshot\n\ttrain: {len(self.zeroshotset.train.tokens_id)}\n\ttest: {len(self.zeroshotset.test.tokens_id)}"
 
     def to_dict(self, trainer, translator):
+        lg.info(f"Start baseset train loss evaluation")
         self.__baseset__.train.loss = trainer.evaluate_loss(self.__baseset__.train.tokens_id)
+        lg.info(f"Stop baseset train loss evaluation")
+        lg.info(f"Start baseset test loss evaluation")
         self.__baseset__.test.loss = trainer.evaluate_loss(self.__baseset__.test.tokens_id)
+        lg.info(f"Stop baseset test loss evaluation")
         self.compute_zeroshot_loss(trainer)
         self.compute_accuracy(trainer)
         self.compute_bleu(translator)

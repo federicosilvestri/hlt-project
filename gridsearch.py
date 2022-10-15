@@ -8,6 +8,7 @@ from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
 from model.decoder import Decoder
 from model.encoder import Encoder
+from model.mt5_encoder import MT5Encoder
 from model.transformer import Transformer
 from trainer.trainer import Trainer
 from pipeline import Pipeline
@@ -17,11 +18,20 @@ import os
 
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
 
+class ModelType:
+    PERSONAL=0
+    BERT=1
+    MT5=2
+
 
 class Hyperparameters:
-    HID_DIM = [256, 768]
-    ENC_LAYERS = [3, 'bert-base-multilingual-cased', 'distilbert-base-multilingual-cased']
-    DEC_LAYERS = [3, 6]
+    HID_DIM = [768]
+    ENC_LAYERS = [
+        (ModelType.MT5, 'google/mt5-small'),
+        #(ModelType.BERT, 'bert-base-multilingual-cased'),
+        #(ModelType.BERT, 'distilbert-base-multilingual-cased'),
+    ]
+    DEC_LAYERS = [3]
     ENC_PF_DIM = [512]
     DEC_PF_DIM = [512]
     LEARNING_RATE = [0.0005]
@@ -54,19 +64,22 @@ class GridSearch:
         i = 0
         print_callback = print_epoch_loss_accuracy(structured_dataset)
         device = f'{DEVICE}:{n_chunk}' if DEVICE == 'cuda' else DEVICE
-        for HID_DIM, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
+        for HID_DIM, ENC_TUPLE, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
             lg.info(f"CHUNK {n_chunk} - Start configuration {i}/{len(hyperparams)}")
 
             INPUT_DIM = VOCAB_SIZE
             OUTPUT_DIM = VOCAB_SIZE
 
-            if type(ENC_LAYERS) == str:
-                enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=ENC_LAYERS)
-            else:
+            ENC_TYPE, ENC_CONFIG = ENC_TUPLE
+            if ENC_TYPE == ModelType.BERT:
+                enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=ENC_CONFIG)
+            elif ENC_TYPE == ModelType.MT5:
+                enc = MT5Encoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=ENC_CONFIG)
+            elif ENC_TYPE == ModelType.PERSONAL:
                 enc = Encoder(INPUT_DIM,
                               HID_DIM,
-                              ENC_LAYERS,
+                              ENC_CONFIG,
                               ENC_HEADS,
                               ENC_PF_DIM,
                               ENC_DROPOUT,
@@ -94,7 +107,8 @@ class GridSearch:
             gs_dict_iter = {
                 "hyperparams": {
                     "HID_DIM": HID_DIM,
-                    "ENC_LAYERS": ENC_LAYERS,
+                    "ENC_TYPE": ENC_TYPE,
+                    "ENC_CONFIG": ENC_CONFIG,
                     "DEC_LAYERS": DEC_LAYERS,
                     "ENC_PF_DIM": ENC_PF_DIM,
                     "DEC_PF_DIM": DEC_PF_DIM,
@@ -142,4 +156,4 @@ class GridSearch:
 
 if __name__ == "__main__":
     gs = GridSearch(Hyperparameters())
-    gs.train(10)
+    gs.train(1)

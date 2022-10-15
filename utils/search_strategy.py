@@ -13,7 +13,6 @@ def search_strategy() -> str:
         device = torch.device('mps')
     except AttributeError:
         device = 'cuda' if torch.cuda.is_available() else device
-    """
     return device
 
 
