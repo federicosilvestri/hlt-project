@@ -1,6 +1,7 @@
 from data.serializer import SDSerializer
 from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
+from model.mt5_encoder import MT5Encoder
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
 from translate.transformer_translator import TransformerTranslator
 from trainer.trainer import Trainer
@@ -66,29 +67,30 @@ class Pipeline:
             structured_dataset = serializer.load()
         return structured_dataset
 
-    def model_creation(self, device=DEVICE):
+    def model_creation(self, type=None, pretrained_type=None, enc_layers=ENC_LAYERS, dec_layers=DEC_LAYERS, hid_dim=HID_DIM,
+                       enc_heads=ENC_HEADS, dec_heads=DEC_HEADS, device=DEVICE):
         #
         # Model creaton
         #
         logging.info("Transformer creation")
-        INPUT_DIM = VOCAB_SIZE
-        OUTPUT_DIM = VOCAB_SIZE
 
-        if PRETRAINED_TYPE is not None:
-            enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=PRETRAINED_TYPE)
+        if type == 'mt5':
+            enc = MT5Encoder(hid_dim, VOCAB_SIZE, device, type=pretrained_type)
+        elif type == 'bert':
+            enc = BERTEncoder(hid_dim, VOCAB_SIZE, device, type=pretrained_type)
         else:
-            enc = Encoder(INPUT_DIM,
-                          HID_DIM,
-                          ENC_LAYERS,
-                          ENC_HEADS,
+            enc = Encoder(VOCAB_SIZE,
+                          hid_dim,
+                          enc_layers,
+                          enc_heads,
                           ENC_PF_DIM,
                           ENC_DROPOUT,
                           device)
 
-        dec = Decoder(OUTPUT_DIM,
-                      HID_DIM,
-                      DEC_LAYERS,
-                      DEC_HEADS,
+        dec = Decoder(VOCAB_SIZE,
+                      hid_dim,
+                      dec_layers,
+                      dec_heads,
                       DEC_PF_DIM,
                       DEC_DROPOUT,
                       device)

@@ -1,4 +1,5 @@
 """Configuration file"""
+import os
 from pathlib import Path
 import random
 import torch
@@ -56,7 +57,8 @@ torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
 # Device
-DEVICE, N_DEGREE = search_strategy()
+DEVICE = search_strategy()
+N_DEGREE = os.cpu_count()
 
 # Model configuration
 PRETRAINED_TYPE = None

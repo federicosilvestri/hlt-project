@@ -28,8 +28,9 @@ class Hyperparameters:
     HID_DIM = [768]
     ENC_LAYERS = [
         (ModelType.MT5, 'google/mt5-small'),
-        #(ModelType.BERT, 'bert-base-multilingual-cased'),
-        #(ModelType.BERT, 'distilbert-base-multilingual-cased'),
+        (ModelType.BERT, 'bert-base-multilingual-cased'),
+        (ModelType.BERT, 'distilbert-base-multilingual-cased'),
+        (ModelType.PERSONAL, 3),
     ]
     DEC_LAYERS = [3]
     ENC_PF_DIM = [512]
@@ -73,9 +74,9 @@ class GridSearch:
 
             ENC_TYPE, ENC_CONFIG = ENC_TUPLE
             if ENC_TYPE == ModelType.BERT:
-                enc = BERTEncoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=ENC_CONFIG)
+                enc = BERTEncoder(HID_DIM, VOCAB_SIZE, device, type=ENC_CONFIG)
             elif ENC_TYPE == ModelType.MT5:
-                enc = MT5Encoder(HID_DIM, ENC_HEADS, VOCAB_SIZE, device, type=ENC_CONFIG)
+                enc = MT5Encoder(HID_DIM, VOCAB_SIZE, device, type=ENC_CONFIG)
             elif ENC_TYPE == ModelType.PERSONAL:
                 enc = Encoder(INPUT_DIM,
                               HID_DIM,

@@ -8,18 +8,13 @@ from torch import nn
 class MT5Encoder(nn.Module):
     def __init__(self,
                  hid_dim,
-                 pf_dim,
                  tokenizer_dim,
                  device,
                  type='google/mt5-small'
                  ):
         super().__init__()
-
         mt5_config = MT5Config.from_pretrained(type)
-
         mt5_config.d_model = hid_dim
-        mt5_config.num_heads = pf_dim
-
         self.mt5 = MT5EncoderModel(mt5_config).to(device)
         self.mt5.resize_token_embeddings(tokenizer_dim)
         self.device = device

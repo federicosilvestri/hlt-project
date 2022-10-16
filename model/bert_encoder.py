@@ -8,18 +8,13 @@ from torch import nn
 class BERTEncoder(nn.Module):
     def __init__(self,
                  hid_dim,
-                 pf_dim,
                  tokenizer_dim,
                  device,
                  type='bert-base-multilingual-cased'
                  ):
         super().__init__()
-
         bert_config = BertConfig.from_pretrained(type)
-
         bert_config.hidden_size = hid_dim
-        bert_config.num_attention_heads = pf_dim
-
         self.bert = BertModel(bert_config).to(device)
         self.bert.resize_token_embeddings(tokenizer_dim)
         self.device = device

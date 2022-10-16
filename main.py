@@ -10,9 +10,27 @@ dataset = pipeline.dataset_load()
 structured_dataset = pipeline.preprocess(dataset)
 print(f"Structured dataset sizes\n{structured_dataset.sizes()}")
 
-model = pipeline.model_creation()
+model = pipeline.model_creation(
+    # None (for personal model), 'bert', 'mt5'
+    type='mt5',
+    # only with pretrained:
+    #       'bert-base-multilingual-cased'          <- bert
+    #       'distilbert-base-multilingual-cased'    <- bert
+    #       'google/mt5-small'                      <- mt5
+    pretrained_type='google/mt5-small',
+    # only with personal model
+    enc_layers=ENC_LAYERS,
+    # only with personal model
+    enc_heads=ENC_HEADS,
+    # personal:                             HID_DIM
+    # bert-base-multilingual-cased:         768
+    # distilbert-base-multilingual-cased:   768
+    # google/mt5-small:                     512
+    hid_dim=512,
+    dec_layers=DEC_LAYERS,
+    dec_heads=DEC_HEADS
+)
 translator = pipeline.create_translator(model)
-
 
 print_callback = print_epoch_loss_accuracy(structured_dataset)
 plot_handler_factory = PlotHandlerFactory(PLOTS_DIR, structured_dataset)
