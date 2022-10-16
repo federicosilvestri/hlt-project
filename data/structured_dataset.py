@@ -99,10 +99,11 @@ class StructuredDataset:
     def zeroshotset(self):
         return self.__zeroshotset__
 
-    def model_callback(self, translator, zeroshot=True, accuracy=True, bleu=True):
-        def callback(trainer, epoch, train_loss, test_loss, timer):
+    def model_callback(self, translator, evaluate_loss=False, zeroshot=False, accuracy=False, bleu=False):
+        def callback(trainer, epoch, train_loss):
             self.__baseset__.train.loss = train_loss
-            self.__baseset__.test.loss = test_loss
+            if evaluate_loss:
+                self.__baseset__.test.loss = trainer.evaluate_loss(self.__baseset__.test.tokens_id)
             if zeroshot:
                 self.compute_zeroshot_loss(trainer)
             if accuracy:

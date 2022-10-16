@@ -56,14 +56,14 @@ class Preprocessor:
                 (f"[2{trg}] {replace_lang(src, k, v)}", f"[CLS] {replace_lang(trg, k, v)} [SEP]")
                 for k, v in self._dataset_.data.items()
             ][: self._limit_]
-        if self.chunks is not None:
+        if self.chunks is not None and self.chunks > 1:
             train_strings_chunks = np.array_split(train_strings, self.chunks)
+            with ThreadPoolExecutor() as executor:
+                futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings_chunks]
+                train_data = reduce(lambda x, y: x + y, [future.result() for future in futures])
         else:
-            train_strings_chunks = [train_strings]
+            train_data = self._preprocessing_(train_strings)
 
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings_chunks]
-            train_data = reduce(lambda x, y: x + y, [future.result() for future in futures])
         return train_strings, train_data
 
     def execute(self, base_lang_config, zeroshot_lang_cnfig):

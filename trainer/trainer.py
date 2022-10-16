@@ -1,6 +1,5 @@
 import random
 import math
-import time
 from typing import Callable, List, Tuple
 import torch
 from torch import nn
@@ -30,21 +29,6 @@ class Trainer:
         self.accuracy = Accuracy().to(device)
         self.device = device
         self.limit_eval = limit_eval
-
-    def __epoch_time(self, start_time: float, end_time: float) -> Tuple[int, int]:
-        """Method able to extract minutes and seconds from a start and an end time.
-
-        Args:
-            start_time (float): Start time of a counter.
-            end_time (float): End time of a counter.
-
-        Returns:
-            Tuple[int, int]: Duration in minutes and seconds.
-        """
-        elapsed_time = end_time - start_time
-        elapsed_mins = int(elapsed_time / 60)
-        elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
-        return elapsed_mins, elapsed_secs
 
     def __create_batches(self, train_set: List[Tuple[torch.tensor, torch.tensor]]) -> List[
         Tuple[torch.tensor, torch.tensor]]:
@@ -162,24 +146,18 @@ class Trainer:
         lg.info("start training")
         for epoch in range(epochs):
             lg.info(f"Start epoch {epoch}")
-            start_time = time.time()
             random.shuffle(train_set)
             mb_train_set = self.__create_batches(train_set)
             lg.info(f"Start train epoch {epoch}")
             train_loss = self.train(mb_train_set)
             lg.info(f"Stop train epoch {epoch}")
-            lg.info(f"Start evaluation epoch {epoch}")
-            test_loss = self.evaluate_loss(test_set)
-            lg.info(f"Stop evaluation epoch {epoch}")
-            end_time = time.time()
-            epoch_mins, epoch_secs = self.__epoch_time(start_time, end_time)
             if save_model:
                 self.model.save_transformer()
             lg.info(f"Start callbacks epoch {epoch}")
             for i, callback in enumerate(callbacks):
                 lg.info(f"Start callback {i} epoch {epoch}")
-                callback(self, epoch, train_loss, test_loss, (epoch_mins, epoch_secs))
+                callback(self, epoch, train_loss)
                 lg.info(f"Stop callback {i} epoch {epoch}")
             lg.info(f"Stop callbacks epoch {epoch}")
         lg.info(f"Stop epoch {epoch}")
-        return train_loss, test_loss
+        return train_loss

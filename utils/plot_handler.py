@@ -19,11 +19,11 @@ class PlotHandler:
         self.file_dir = file_dir
         self.file_name = file_name
 
-    def model_callback(self, trainer, epoch, loss_train, loss_val, time):
-        self.train_list.append(self.callbacks[0](trainer, epoch, loss_train, loss_val))
-        self.test_list.append(self.callbacks[1](trainer, epoch, loss_train, loss_val))
-        self.zero_shot_train_list.append(self.callbacks[2](trainer, epoch, loss_train, loss_val))
-        self.zero_shot_test_list.append(self.callbacks[3](trainer, epoch, loss_train, loss_val))
+    def model_callback(self, trainer, epoch, loss_train):
+        self.train_list.append(self.callbacks[0](trainer, epoch, loss_train))
+        self.test_list.append(self.callbacks[1](trainer, epoch, loss_train))
+        self.zero_shot_train_list.append(self.callbacks[2](trainer, epoch, loss_train))
+        self.zero_shot_test_list.append(self.callbacks[3](trainer, epoch, loss_train))
 
     def save_plot(self):
         plt.figure()
@@ -46,20 +46,20 @@ class PlotHandlerFactory:
         self.structured_dataset = structured_dataset
     def create_celoss_plot(self):
         plot_handler = PlotHandler('celoss', self.plots_dir, "celoss_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: loss_train,
-            lambda trainer, epoch, loss_train, loss_val: loss_val,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.loss,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.loss,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.train.loss,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.test.loss,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.train.loss,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.test.loss,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler
 
     def create_accuracy_plot(self):
         plot_handler = PlotHandler('accuracy', self.plots_dir, "accuracy_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.train.accuracy,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.test.accuracy,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.accuracy,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.accuracy,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.train.accuracy,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.test.accuracy,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.train.accuracy,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.test.accuracy,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler
@@ -67,20 +67,20 @@ class PlotHandlerFactory:
 
     def create_bleu_plot(self):
         plot_handler = PlotHandler('bleu', self.plots_dir, "bleu_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.train.bleu,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.test.bleu,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.bleu,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.bleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.train.bleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.test.bleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.train.bleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.test.bleu,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler
 
     def create_sacrebleu_plot(self):
         plot_handler = PlotHandler('sacrebleu', self.plots_dir, "sacrebleu_plot.png", [
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.train.sacrebleu,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.baseset.test.sacrebleu,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.train.sacrebleu,
-            lambda trainer, epoch, loss_train, loss_val: self.structured_dataset.zeroshotset.test.sacrebleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.train.sacrebleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.baseset.test.sacrebleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.train.sacrebleu,
+            lambda trainer, epoch, loss_train: self.structured_dataset.zeroshotset.test.sacrebleu,
         ])
         self.plot_handlers.append(plot_handler)
         return plot_handler

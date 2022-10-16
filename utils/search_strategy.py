@@ -1,3 +1,5 @@
+import os
+
 import torch
 
 
@@ -8,12 +10,12 @@ def search_strategy() -> str:
     """
 
     # Detect hardware
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = 'cpu'
     try:
         device = torch.device('mps')
     except AttributeError:
         device = 'cuda' if torch.cuda.is_available() else device
-    return device
+    return device, os.cpu_count()
 
 
 if __name__ == '__main__':

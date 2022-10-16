@@ -41,7 +41,7 @@ class Hyperparameters:
 class GridSearch:
     def __init__(self, hyperparameters: Hyperparameters):
         self.hyperparameters = hyperparameters
-        self.n_chunks = torch.cuda.device_count() if DEVICE == 'cuda' else os.cpu_count() if DEVICE == 'cpu' else 10
+        self.n_chunks = min(torch.cuda.device_count(), N_DEGREE) if DEVICE == 'cuda' else N_DEGREE
         gs_dir = GENERATED_FILE_DIR / "gridsearch"
         if not gs_dir.exists():
             gs_dir.mkdir()
@@ -102,6 +102,7 @@ class GridSearch:
                 structured_dataset.baseset.train.tokens_id,
                 structured_dataset.baseset.test.tokens_id,
                 epochs=epochs, callbacks=[
+                    structured_dataset.model_callback(translator),
                     print_callback
                 ], save_model=False)
             gs_dict_iter = {

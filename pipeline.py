@@ -52,7 +52,7 @@ class Pipeline:
 
         if not serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, tokenizer=TOKENIZER, max_length=MAX_LENGTH, chunks=CHUNKS,
+            preprocessor = Preprocessor(dataset=dataset, tokenizer=TOKENIZER, max_length=MAX_LENGTH, chunks=N_DEGREE,
                                         limit=limit, device=device)
             # executing preprocessing
             base_lang_config, zeroshot_lang_config = preprocessor.execute(BASE_LANG_CONFIG, ZEROSHOT_LANG_CONFIG)
@@ -107,8 +107,9 @@ class Pipeline:
         trainer(structured_dataset.baseset.train.tokens_id, structured_dataset.baseset.test.tokens_id, epochs=epochs,
                 callbacks=callbacks)
         logging.info("End model training")
+        return trainer
 
-    def create_translator(self, model, tokenizer=TOKENIZER, chunks=CHUNKS, device=DEVICE):
+    def create_translator(self, model, tokenizer=TOKENIZER, chunks=N_DEGREE, device=DEVICE):
         return TransformerTranslator(model, tokenizer, tokenizer, MAX_LENGTH, chunks, device, limit_bleu=LIMIT_BLEU)
 
     def translate(self, translator, structured_dataset: StructuredDataset, limit=6):

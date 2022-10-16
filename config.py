@@ -22,7 +22,6 @@ TOKENIZER.add_tokens([f"[2{lang}]" for lang in ["en", "it", "es", "de", "fr"]])
 VOCAB_SIZE = len(TOKENIZER)
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
 PREPROCESSOR_FILE_NAME = "preprocessor.pickle"
-CHUNKS = 32
 BASE_LANG_CONFIG = [
     ("en", "it"),
     ("en", "es"),
@@ -57,7 +56,7 @@ torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
 # Device
-DEVICE = search_strategy()
+DEVICE, N_DEGREE = search_strategy()
 
 # Model configuration
 PRETRAINED_TYPE = None

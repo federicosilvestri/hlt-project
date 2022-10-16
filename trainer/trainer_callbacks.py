@@ -7,15 +7,17 @@ def print_epoch_loss_accuracy(structured_dataset: StructuredDataset):
             f'\t|\tbleu:\t{bleu:.3f}' if bleu is not None else '') + (
                    f'\t|\tsacrebleu:\t{sacrebleu:.3f}' if sacrebleu is not None else '')
 
-    def callback(trainer, epoch, train_loss, test_loss, timer):
-        epoch_mins, epoch_secs = timer
-        print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
-        print(print_loss_acc('Dataset  TR-set', train_loss, structured_dataset.baseset.train.accuracy,
+    def callback(trainer, epoch, train_loss):
+        print(f'Epoch: {epoch + 1:02}')
+        print(print_loss_acc('Dataset  TR-set', structured_dataset.baseset.train.loss,
+                             structured_dataset.baseset.train.accuracy,
                              structured_dataset.baseset.train.bleu,
                              structured_dataset.baseset.train.sacrebleu))
-        print(print_loss_acc('Dataset  TS-set', test_loss, structured_dataset.baseset.test.accuracy,
-                             structured_dataset.baseset.test.bleu,
-                             structured_dataset.baseset.test.sacrebleu))
+        if structured_dataset.baseset.test.loss is not None:
+            print(print_loss_acc('Dataset  TS-set', structured_dataset.baseset.test.loss,
+                                 structured_dataset.baseset.test.accuracy,
+                                 structured_dataset.baseset.test.bleu,
+                                 structured_dataset.baseset.test.sacrebleu))
         if structured_dataset.zeroshotset.train.loss is not None:
             print(print_loss_acc('Zeroshot TR-set', structured_dataset.zeroshotset.train.loss,
                                  structured_dataset.zeroshotset.train.accuracy,

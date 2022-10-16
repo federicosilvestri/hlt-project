@@ -98,16 +98,19 @@ class TransformerTranslator:
             TranslatedSet: Translated set.
         """
         trgs, preds, trgs_tokens, preds_tokens = [], [], [], []
-        if self.chunks is not None:
-            test_set = np.array_split(test_set[:self.limit_bleu], self.chunks)
+        test_set = test_set[:self.limit_bleu]
+        if self.chunks is not None and self.chunks > 1:
+            test_set_chunks = np.array_split(test_set, self.chunks)
+            with ThreadPoolExecutor() as executor:
+                futures = [executor.submit(self.compute_test_set_chunk, chunk) for chunk in test_set_chunks]
+                for future in futures:
+                    trg_chunk, pred_chunk, trg_tokens_chunk, pred_tokens_chunk = future.result()
+                    trgs += trg_chunk
+                    preds += pred_chunk
+                    trgs_tokens += trg_tokens_chunk
+                    preds_tokens += pred_tokens_chunk
+        else:
+            trgs, preds, trgs_tokens, preds_tokens = self.compute_test_set_chunk(test_set)
 
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self.compute_test_set_chunk, chunk) for chunk in test_set]
-            for future in futures:
-                trg_chunk, pred_chunk, trg_tokens_chunk, pred_tokens_chunk = future.result()
-                trgs += trg_chunk
-                preds += pred_chunk
-                trgs_tokens += trg_tokens_chunk
-                preds_tokens += pred_tokens_chunk
 
         return TranslatedSet(trgs, preds, trgs_tokens, preds_tokens)
