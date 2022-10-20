@@ -72,7 +72,7 @@ class TransformerTranslator:
             trg_tokens = self.tokenizer_decoder.convert_ids_to_tokens(trg_indexes)
             if trg_tokens[-1] == "[SEP]":
                 break
-        #trg_tokens = trg_tokens[1:-1]
+        trg_tokens = trg_tokens[1:-1]
         res_sent = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens)
         return res_sent
 
@@ -82,6 +82,7 @@ class TransformerTranslator:
             trg_tokens = self.tokenizer_decoder.tokenize(trg)
             pred = self.__call__(src)
             pred_tokens = self.tokenizer_decoder.tokenize(pred)
+            trg = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens[1:-1])
             trgs.append([trg])
             preds.append(pred)
             trgs_tokens.append([trg_tokens])
