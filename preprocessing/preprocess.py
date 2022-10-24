@@ -5,9 +5,11 @@ import numpy as np
 from data import Dataset
 from utils import search_strategy
 
+
 class Preprocessor:
     def __init__(
-        self, dataset: Dataset, tokenizer, device, max_length: int = 100, limit: tp.Optional[int] = None, chunks: int = None
+            self, dataset: Dataset, tokenizer, device, max_length: int = 100, limit: tp.Optional[int] = None,
+            chunks: int = None
     ):
         # we need to implement the search strategy
         self._device_: str = device
@@ -50,12 +52,13 @@ class Preprocessor:
     def _wrap_preprocessing_by_lang_(self, langs):
         def replace_lang(lang, k, v):
             return k if lang == "en" else v[lang]
+
         train_strings = []
-        for src, trg in langs:
+        for k, v in self._dataset_.data.items():
             train_strings += [
-                (f"[2{trg}] {replace_lang(src, k, v)}", f"[CLS] {replace_lang(trg, k, v)} [SEP]")
-                for k, v in self._dataset_.data.items()
-            ][: self._limit_]
+                                 (f"[2{trg}] {replace_lang(src, k, v)}", f"{replace_lang(trg, k, v)}")
+                                 for src, trg in langs
+                             ][: self._limit_]
         if self.chunks is not None and self.chunks > 1:
             train_strings_chunks = np.array_split(train_strings, self.chunks)
             with ThreadPoolExecutor() as executor:

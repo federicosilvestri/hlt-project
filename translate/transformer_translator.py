@@ -47,6 +47,7 @@ class TransformerTranslator:
         Returns:
             str: Translated sentence.
         """
+        self.model.eval()
         src_indexes = (
             self.tokenizer_encoder(
                 src_sentence,
@@ -67,7 +68,7 @@ class TransformerTranslator:
             trg_tensor = torch.tensor(trg_indexes).unsqueeze(0).to(self.device)
             with torch.no_grad():
                 output, attention = self.model.decoder(trg_tensor, enc_src)
-            pred_index = output.argmax(-1)[:, -1].item()
+            pred_index = torch.argmax(output[0, -1], dim=-1).item()
             trg_indexes.append(pred_index)
             trg_tokens = self.tokenizer_decoder.convert_ids_to_tokens(trg_indexes)
             if trg_tokens[-1] == "[SEP]":

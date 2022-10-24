@@ -2,7 +2,6 @@ import json
 import logging
 import typing as tp
 from pathlib import Path
-import random
 
 
 class Dataset:
@@ -15,11 +14,7 @@ class Dataset:
         logging.info("Loading dataset inside memory")
         # loading the file inside the memory
         with open(self.__ds_file__) as fp:
-            dataset = json.load(fp)
-            keys = [key for key in dataset.keys()]
-            random.shuffle(keys)
-            keys = keys[:len(keys) // cut]
-            self.__ds__ = {key: dataset[key] for key in keys}
+            self.__ds__ = json.load(fp)
 
     @property
     def data(self):
