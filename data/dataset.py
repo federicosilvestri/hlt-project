@@ -14,7 +14,10 @@ class Dataset:
         logging.info("Loading dataset inside memory")
         # loading the file inside the memory
         with open(self.__ds_file__) as fp:
-            self.__ds__ = json.load(fp)
+            dataset = json.load(fp)
+            keys = [key for key in dataset.keys()]
+            keys = keys[:len(keys) // cut]
+            self.__ds__ = {key: dataset[key] for key in keys}
 
     @property
     def data(self):
