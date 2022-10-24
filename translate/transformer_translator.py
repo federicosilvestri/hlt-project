@@ -31,6 +31,7 @@ class TransformerTranslator:
             device (str, optional): Accelerator used to translate data.
         """
         self.model = model
+        self.model.eval()
         self.tokenizer_encoder = tokenizer_encoder
         self.tokenizer_decoder = tokenizer_decoder
         self.max_length = max_length
@@ -47,7 +48,6 @@ class TransformerTranslator:
         Returns:
             str: Translated sentence.
         """
-        self.model.eval()
         src_indexes = (
             self.tokenizer_encoder(
                 src_sentence,
@@ -83,7 +83,6 @@ class TransformerTranslator:
             trg_tokens = self.tokenizer_decoder.tokenize(trg)
             pred = self.__call__(src)
             pred_tokens = self.tokenizer_decoder.tokenize(pred)
-            trg_tokens = trg_tokens[1:-1]
             trg = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens)
             trgs.append([trg])
             preds.append(pred)
