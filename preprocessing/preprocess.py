@@ -54,11 +54,11 @@ class Preprocessor:
             return k if lang == "en" else v[lang]
 
         train_strings = []
-        for k, v in self._dataset_.data.items():
+        for k, v in list(self._dataset_.data.items())[: self._limit_]:
             train_strings += [
                                  (f"[2{trg}] {replace_lang(src, k, v)}", f"{replace_lang(trg, k, v)}")
                                  for src, trg in langs
-                             ][: self._limit_]
+                             ]
         if self.chunks is not None and self.chunks > 1:
             train_strings_chunks = np.array_split(train_strings, self.chunks)
             with ThreadPoolExecutor() as executor:
