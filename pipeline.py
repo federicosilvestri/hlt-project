@@ -99,12 +99,14 @@ class Pipeline:
 
     def train_model(self, model, TRG_INDEX_PAD, structured_dataset: StructuredDataset, epochs=EPOCHS, clip=CLIP,
                     learning_rate=LEARNING_RATE,
+                    batch_size=BATCH_SIZE,
+                    limit_eval=LIMIT_EVAL,
                     callbacks=[], device=DEVICE):
         #
         # Model training
         #
-        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=BATCH_SIZE, clip=clip,
-                          device=device, limit_eval=LIMIT_EVAL)
+        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=batch_size, clip=clip,
+                          device=device, limit_eval=limit_eval)
         logging.info("Start model training")
         trainer(structured_dataset.baseset.train.tokens_id, structured_dataset.baseset.test.tokens_id, epochs=epochs,
                 callbacks=callbacks)

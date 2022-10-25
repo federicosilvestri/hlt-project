@@ -10,7 +10,7 @@ class BERTEncoder(nn.Module):
                  hid_dim,
                  tokenizer_dim,
                  device,
-                 type='bert-base-multilingual-cased'
+                 type='bert-base-multilingual-uncased'
                  ):
         super().__init__()
         bert_config = BertConfig.from_pretrained(type)

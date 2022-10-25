@@ -76,7 +76,7 @@ MODEL_FILE_NAME = "zero_shot_nmt.torch"
 
 # Trainer configuration
 HOLDOUT_VALID_FRACTION = 0.1
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 EPOCHS = 10
 CLIP = 1
 LEARNING_RATE = 0.0005
