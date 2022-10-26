@@ -101,7 +101,6 @@ class GridSearch:
             translator = pipeline.create_translator(model, device=device)
             trainer(
                 structured_dataset.baseset.train.tokens_id,
-                structured_dataset.baseset.test.tokens_id,
                 epochs=epochs, callbacks=[
                     structured_dataset.model_callback(translator),
                     print_callback

@@ -108,7 +108,7 @@ class Pipeline:
         trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=batch_size, clip=clip,
                           device=device, limit_eval=limit_eval)
         logging.info("Start model training")
-        trainer(structured_dataset.baseset.train.tokens_id, structured_dataset.baseset.test.tokens_id, epochs=epochs,
+        trainer(structured_dataset.baseset.train.tokens_id, epochs=epochs,
                 callbacks=callbacks)
         logging.info("End model training")
         return trainer

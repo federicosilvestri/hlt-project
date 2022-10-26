@@ -132,14 +132,12 @@ class Trainer:
         return epoch_acc / len(test_set)
 
     def __call__(self, train_set: List[Tuple[torch.tensor, torch.tensor]],
-                 test_set: List[Tuple[torch.tensor, torch.tensor]],
                  epochs: int = 10, callbacks: List[Callable] = [],
                  save_model=True) -> None:
         """Main method of the class able to train the model.
 
         Args:
             train_set (List[Tuple[torch.tensor, torch.tensor]])): Training set.
-            test_set (List[Tuple[torch.tensor, torch.tensor]])): Test set.
             epochs (int, optional): Number of time that the train process is repeated.
             callbacks (List[Callable], optional): List of callbacks called after each epoch.
         """
