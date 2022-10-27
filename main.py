@@ -14,8 +14,8 @@ model = pipeline.model_creation(
     # None (for personal model), 'bert', 'mt5'
     type='mt5',
     # only with pretrained:
-    #       'bert-base-multilingual-cased'          <- bert
-    #       'distilbert-base-multilingual-cased'    <- bert
+    #       'bert-base-multilingual-uncased'          <- bert
+    #       'distilbert-base-multilingual-uncased'    <- bert
     #       'google/mt5-small'                      <- mt5
     pretrained_type='google/mt5-small',
     # only with personal model
@@ -23,8 +23,8 @@ model = pipeline.model_creation(
     # only with personal model
     enc_heads=ENC_HEADS,
     # personal:                             HID_DIM
-    # bert-base-multilingual-cased:         768
-    # distilbert-base-multilingual-cased:   768
+    # bert-base-multilingual-uncased:         768
+    # distilbert-base-multilingual-uncased:   768
     # google/mt5-small:                     512
     hid_dim=512,
     dec_layers=DEC_LAYERS,

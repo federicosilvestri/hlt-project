@@ -13,22 +13,21 @@ from model.transformer import Transformer
 from trainer.trainer import Trainer
 from pipeline import Pipeline
 import logging as lg
-import numpy as np
-import os
 
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
 
+
 class ModelType:
-    PERSONAL=0
-    BERT=1
-    MT5=2
+    PERSONAL = 0
+    BERT = 1
+    MT5 = 2
 
 
 class Hyperparameters:
     HID_DIM = [768]
     ENC_LAYERS = [
         (ModelType.MT5, 'google/mt5-small'),
-        (ModelType.BERT, 'bert-base-multilingual-cased'),
+        (ModelType.BERT, 'bert-base-multilingual-uncased'),
         (ModelType.BERT, 'distilbert-base-multilingual-cased'),
         (ModelType.PERSONAL, 3),
     ]
