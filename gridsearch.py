@@ -25,12 +25,13 @@ class ModelType:
 
 class Hyperparameters:
     HID_DIM = [768]
-    ENC_LAYERS = [
+    ENC_TYPES = [
         (ModelType.MT5, 'google/mt5-small'),
         (ModelType.BERT, 'bert-base-multilingual-uncased'),
         (ModelType.BERT, 'distilbert-base-multilingual-cased'),
-        (ModelType.PERSONAL, 3),
+        (ModelType.PERSONAL, None),
     ]
+    ENC_LAYERS = [3]
     DEC_LAYERS = [3]
     ENC_PF_DIM = [512]
     DEC_PF_DIM = [512]
@@ -64,22 +65,36 @@ class GridSearch:
         i = 0
         print_callback = print_epoch_loss_accuracy(structured_dataset)
         device = f'{DEVICE}:{n_chunk}' if DEVICE == 'cuda' else DEVICE
-        for HID_DIM, ENC_TUPLE, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
+        for HID_DIM, ENC_TYPES, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
             lg.info(f"CHUNK {n_chunk} - Start configuration {i}/{len(hyperparams)}")
 
             INPUT_DIM = VOCAB_SIZE
             OUTPUT_DIM = VOCAB_SIZE
 
-            ENC_TYPE, ENC_CONFIG = ENC_TUPLE
+            ENC_TYPE, ENC_MODEL_TYPE = ENC_TYPES
             if ENC_TYPE == ModelType.BERT:
-                enc = BERTEncoder(HID_DIM, VOCAB_SIZE, device, type=ENC_CONFIG)
+                enc = BERTEncoder(INPUT_DIM,
+                                  HID_DIM,
+                                  ENC_LAYERS,
+                                  ENC_HEADS,
+                                  ENC_PF_DIM,
+                                  ENC_DROPOUT,
+                                  device,
+                                  type=ENC_MODEL_TYPE)
             elif ENC_TYPE == ModelType.MT5:
-                enc = MT5Encoder(HID_DIM, VOCAB_SIZE, device, type=ENC_CONFIG)
+                enc = MT5Encoder(INPUT_DIM,
+                                 HID_DIM,
+                                 ENC_LAYERS,
+                                 ENC_HEADS,
+                                 ENC_PF_DIM,
+                                 ENC_DROPOUT,
+                                 device,
+                                 type=ENC_MODEL_TYPE)
             elif ENC_TYPE == ModelType.PERSONAL:
                 enc = Encoder(INPUT_DIM,
                               HID_DIM,
-                              ENC_CONFIG,
+                              ENC_LAYERS,
                               ENC_HEADS,
                               ENC_PF_DIM,
                               ENC_DROPOUT,
@@ -108,7 +123,8 @@ class GridSearch:
                 "hyperparams": {
                     "HID_DIM": HID_DIM,
                     "ENC_TYPE": ENC_TYPE,
-                    "ENC_CONFIG": ENC_CONFIG,
+                    "ENC_TYPES": ENC_TYPES,
+                    "ENC_LAYERS": ENC_LAYERS,
                     "DEC_LAYERS": DEC_LAYERS,
                     "ENC_PF_DIM": ENC_PF_DIM,
                     "DEC_PF_DIM": DEC_PF_DIM,
@@ -128,6 +144,7 @@ class GridSearch:
         lg.info(f"Structured dataset sizes\n{structured_dataset.sizes()}")
         hyperparams = list(product(
             self.hyperparameters.HID_DIM,
+            self.hyperparameters.ENC_TYPES,
             self.hyperparameters.ENC_LAYERS,
             self.hyperparameters.DEC_LAYERS,
             self.hyperparameters.ENC_PF_DIM,
@@ -156,4 +173,4 @@ class GridSearch:
 
 if __name__ == "__main__":
     gs = GridSearch(Hyperparameters())
-    gs.train(1)
+    gs.train(10)

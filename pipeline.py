@@ -67,7 +67,8 @@ class Pipeline:
             structured_dataset = serializer.load()
         return structured_dataset
 
-    def model_creation(self, type=None, pretrained_type=None, enc_layers=ENC_LAYERS, dec_layers=DEC_LAYERS, hid_dim=HID_DIM,
+    def model_creation(self, type=None, pretrained_type=None, enc_layers=ENC_LAYERS, dec_layers=DEC_LAYERS,
+                       hid_dim=HID_DIM,
                        enc_heads=ENC_HEADS, dec_heads=DEC_HEADS, device=DEVICE):
         #
         # Model creaton
@@ -75,9 +76,25 @@ class Pipeline:
         logging.info("Transformer creation")
 
         if type == 'mt5':
-            enc = MT5Encoder(hid_dim, VOCAB_SIZE, device, type=pretrained_type)
+            enc = MT5Encoder(VOCAB_SIZE,
+                             hid_dim,
+                             enc_layers,
+                             enc_heads,
+                             ENC_PF_DIM,
+                             ENC_DROPOUT,
+                             device,
+                             type=pretrained_type
+                             )
         elif type == 'bert':
-            enc = BERTEncoder(hid_dim, VOCAB_SIZE, device, type=pretrained_type)
+            enc = BERTEncoder(VOCAB_SIZE,
+                              hid_dim,
+                              enc_layers,
+                              enc_heads,
+                              ENC_PF_DIM,
+                              ENC_DROPOUT,
+                              device,
+                              type=pretrained_type
+                              )
         else:
             enc = Encoder(VOCAB_SIZE,
                           hid_dim,
