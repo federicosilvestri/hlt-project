@@ -22,30 +22,8 @@ class Preprocessor:
     def _preprocessing_(self, train_strings):
         train_data = []
         for src, trg in train_strings:
-            src = (
-                self._tokenizer_(
-                    src,
-                    return_tensors="pt",
-                    add_special_tokens=True,
-                    max_length=self._max_length_,
-                    padding="max_length",
-                    truncation=True,
-                )
-                .to(self._device_)
-                .data["input_ids"]
-            )
-            trg = (
-                self._tokenizer_(
-                    trg,
-                    return_tensors="pt",
-                    add_special_tokens=True,
-                    max_length=self._max_length_,
-                    padding="max_length",
-                    truncation=True,
-                )
-                .to(self._device_)
-                .data["input_ids"]
-            )
+            src = self._tokenizer_(src)
+            trg = self._tokenizer_(trg)
             train_data.append((src, trg))
         return train_data
 
