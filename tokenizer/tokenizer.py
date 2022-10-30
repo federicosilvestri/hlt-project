@@ -1,9 +1,9 @@
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 
 
 class Tokenizer:
     def __init__(self, type='bert-base-multilingual-uncased', max_length=100, device='cpu'):
-        self.instance = BertTokenizer.from_pretrained(type)
+        self.instance = AutoTokenizer.from_pretrained(type)
         self.instance.add_tokens([f"[2{lang}]" for lang in ["en", "it", "es", "de", "fr"]])
         self.vocab_size = len(self.instance)
         self.max_length = max_length
