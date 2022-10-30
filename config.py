@@ -5,7 +5,6 @@ import random
 import torch
 import numpy as np
 from utils import search_strategy
-from transformers import BertTokenizer
 
 GENERATED_FILE_DIR = Path(__file__).parent / "generated"
 if not GENERATED_FILE_DIR.exists():

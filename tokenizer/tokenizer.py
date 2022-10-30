@@ -1,4 +1,3 @@
-
 class Tokenizer:
     def __init__(self, hugging_face_tokenizer, max_length=100, device='cpu'):
         self.instance = hugging_face_tokenizer

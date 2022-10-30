@@ -16,6 +16,7 @@ from pipeline import Pipeline
 import logging as lg
 
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
+from transformers import BertTokenizer
 
 
 class ModelType:
@@ -174,7 +175,7 @@ class GridSearch:
 
 
 if __name__ == "__main__":
-    tokenizer = Tokenizer()
+    tokenizer = Tokenizer(BertTokenizer.from_pretrained('bert-base-multilingual-uncased'), device=DEVICE)
     hyperparameters = Hyperparameters()
     gs = GridSearch(hyperparameters, tokenizer)
     gs.train(10)

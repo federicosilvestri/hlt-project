@@ -7,7 +7,7 @@ from config import *
 
 print(f"DEVICE '{DEVICE}' with max N_DEGREE {N_DEGREE}")
 
-tokenizer = Tokenizer(MT5Tokenizer.from_pretrained('google/mt5-small'))
+tokenizer = Tokenizer(MT5Tokenizer.from_pretrained('google/mt5-small'), device=DEVICE)
 pipeline = Pipeline(tokenizer)
 
 dataset = pipeline.dataset_load()
