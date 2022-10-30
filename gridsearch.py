@@ -10,6 +10,7 @@ from model.decoder import Decoder
 from model.encoder import Encoder
 from model.mt5_encoder import MT5Encoder
 from model.transformer import Transformer
+from tokenizer import Tokenizer
 from trainer.trainer import Trainer
 from pipeline import Pipeline
 import logging as lg
@@ -40,7 +41,8 @@ class Hyperparameters:
 
 
 class GridSearch:
-    def __init__(self, hyperparameters: Hyperparameters):
+    def __init__(self, hyperparameters: Hyperparameters, tokenizer: Tokenizer):
+        self.tokenizer = tokenizer
         self.hyperparameters = hyperparameters
         self.n_chunks = min(torch.cuda.device_count(), N_DEGREE) if DEVICE == 'cuda' else N_DEGREE
         gs_dir = GENERATED_FILE_DIR / "gridsearch"
@@ -69,8 +71,8 @@ class GridSearch:
             i += 1
             lg.info(f"CHUNK {n_chunk} - Start configuration {i}/{len(hyperparams)}")
 
-            INPUT_DIM = VOCAB_SIZE
-            OUTPUT_DIM = VOCAB_SIZE
+            INPUT_DIM = self.tokenizer.vocab_size
+            OUTPUT_DIM = self.tokenizer.vocab_size
 
             ENC_TYPE, ENC_MODEL_TYPE = ENC_TYPES
             if ENC_TYPE == ModelType.BERT:
@@ -110,7 +112,7 @@ class GridSearch:
 
             model = Transformer(enc, dec, device, MODEL_DIR, MODEL_FILE_NAME).to(device)
 
-            trainer = Trainer(model, TOKENIZER.vocab['pad'], LEARNING_RATE, clip=CLIP, device=device,
+            trainer = Trainer(model, self.tokenizer.pad_index, LEARNING_RATE, clip=CLIP, device=device,
                               limit_eval=LIMIT_EVAL)
             translator = pipeline.create_translator(model, device=device)
             trainer(
@@ -138,7 +140,7 @@ class GridSearch:
                 json.dump(self.gs_dicts[n_chunk], fp)
 
     def train(self, epochs=10):
-        pipeline = Pipeline()
+        pipeline = Pipeline(self.tokenizer)
         dataset = pipeline.dataset_load()
         structured_dataset = pipeline.preprocess(dataset)
         lg.info(f"Structured dataset sizes\n{structured_dataset.sizes()}")
@@ -172,5 +174,7 @@ class GridSearch:
 
 
 if __name__ == "__main__":
-    gs = GridSearch(Hyperparameters())
+    tokenizer = Tokenizer()
+    hyperparameters = Hyperparameters()
+    gs = GridSearch(hyperparameters, tokenizer)
     gs.train(10)

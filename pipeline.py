@@ -26,6 +26,8 @@ root.addHandler(handler)
 
 
 class Pipeline:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
     def dataset_load(self):
         #
         # Downloading dataset
@@ -53,7 +55,7 @@ class Pipeline:
 
         if not serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, tokenizer=TOKENIZER, max_length=MAX_LENGTH, chunks=N_DEGREE,
+            preprocessor = Preprocessor(dataset=dataset, tokenizer=self.tokenizer, max_length=MAX_LENGTH, chunks=N_DEGREE,
                                         limit=limit, device=device)
             # executing preprocessing
             base_lang_config, zeroshot_lang_config = preprocessor.execute(BASE_LANG_CONFIG, ZEROSHOT_LANG_CONFIG)
@@ -76,7 +78,7 @@ class Pipeline:
         logging.info("Transformer creation")
 
         if type == 'mt5':
-            enc = MT5Encoder(VOCAB_SIZE,
+            enc = MT5Encoder(self.tokenizer.vocab_size,
                              hid_dim,
                              enc_layers,
                              enc_heads,
@@ -86,7 +88,7 @@ class Pipeline:
                              type=pretrained_type
                              )
         elif type == 'bert':
-            enc = BERTEncoder(VOCAB_SIZE,
+            enc = BERTEncoder(self.tokenizer.vocab_size,
                               hid_dim,
                               enc_layers,
                               enc_heads,
@@ -96,7 +98,7 @@ class Pipeline:
                               type=pretrained_type
                               )
         else:
-            enc = Encoder(VOCAB_SIZE,
+            enc = Encoder(self.tokenizer.vocab_size,
                           hid_dim,
                           enc_layers,
                           enc_heads,
@@ -104,7 +106,7 @@ class Pipeline:
                           ENC_DROPOUT,
                           device)
 
-        dec = Decoder(VOCAB_SIZE,
+        dec = Decoder(self.tokenizer.vocab_size,
                       hid_dim,
                       dec_layers,
                       dec_heads,
@@ -114,7 +116,7 @@ class Pipeline:
 
         return Transformer(enc, dec, device, MODEL_DIR, MODEL_FILE_NAME).to(device)
 
-    def train_model(self, model, TRG_INDEX_PAD, structured_dataset: StructuredDataset, epochs=EPOCHS, clip=CLIP,
+    def train_model(self, model, structured_dataset: StructuredDataset, epochs=EPOCHS, clip=CLIP,
                     learning_rate=LEARNING_RATE,
                     batch_size=BATCH_SIZE,
                     limit_eval=LIMIT_EVAL,
@@ -122,7 +124,7 @@ class Pipeline:
         #
         # Model training
         #
-        trainer = Trainer(model, TRG_INDEX_PAD, learning_rate=learning_rate, batch_size=batch_size, clip=clip,
+        trainer = Trainer(model, self.tokenizer.pad_index, learning_rate=learning_rate, batch_size=batch_size, clip=clip,
                           device=device, limit_eval=limit_eval)
         logging.info("Start model training")
         trainer(structured_dataset.baseset.train.tokens_id, epochs=epochs,
@@ -130,8 +132,8 @@ class Pipeline:
         logging.info("End model training")
         return trainer
 
-    def create_translator(self, model, tokenizer=TOKENIZER, chunks=N_DEGREE, device=DEVICE):
-        return TransformerTranslator(model, tokenizer, tokenizer, MAX_LENGTH, chunks, device, limit_bleu=LIMIT_BLEU)
+    def create_translator(self, model, chunks=N_DEGREE, device=DEVICE):
+        return TransformerTranslator(model, self.tokenizer, self.tokenizer, MAX_LENGTH, chunks, device, limit_bleu=LIMIT_BLEU)
 
     def translate(self, translator, structured_dataset: StructuredDataset, limit=6):
         #

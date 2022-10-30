@@ -18,9 +18,6 @@ DATASET_FILE_NAME = "dataset.json"
 DATASET_CUT = 12
 
 # Preprocessor Serializer
-TOKENIZER = BertTokenizer.from_pretrained("bert-base-multilingual-uncased")
-TOKENIZER.add_tokens([f"[2{lang}]" for lang in ["en", "it", "es", "de", "fr"]])
-VOCAB_SIZE = len(TOKENIZER)
 PREPROCESSOR_DIR = GENERATED_FILE_DIR / "serialized"
 PREPROCESSOR_FILE_NAME = "preprocessor.pickle"
 BASE_LANG_CONFIG = [

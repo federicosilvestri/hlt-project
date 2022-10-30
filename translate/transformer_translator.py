@@ -48,18 +48,7 @@ class TransformerTranslator:
         Returns:
             str: Translated sentence.
         """
-        src_indexes = (
-            self.tokenizer_encoder(
-                src_sentence,
-                return_tensors="pt",
-                add_special_tokens=True,
-                max_length=self.max_length,
-                padding="max_length",
-                truncation=True,
-            )
-            .to(self.device)
-            .data["input_ids"]
-        )
+        src_indexes = self.tokenizer_encoder(src_sentence)
         src_tensor = src_indexes.to(self.device)
         trg_indexes = self.tokenizer_decoder.convert_tokens_to_ids(["[CLS]"])
         with torch.no_grad():
