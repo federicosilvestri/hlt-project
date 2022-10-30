@@ -1,9 +1,7 @@
-from transformers import AutoTokenizer
-
 
 class Tokenizer:
-    def __init__(self, type='bert-base-multilingual-uncased', max_length=100, device='cpu'):
-        self.instance = AutoTokenizer.from_pretrained(type)
+    def __init__(self, hugging_face_tokenizer, max_length=100, device='cpu'):
+        self.instance = hugging_face_tokenizer
         self.instance.add_tokens([f"[2{lang}]" for lang in ["en", "it", "es", "de", "fr"]])
         self.vocab_size = len(self.instance)
         self.max_length = max_length

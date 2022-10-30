@@ -1,12 +1,13 @@
 from pipeline import Pipeline
 from tokenizer import Tokenizer
+from transformers import MT5Tokenizer
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
 from utils.plot_handler import PlotHandlerFactory
 from config import *
 
 print(f"DEVICE '{DEVICE}' with max N_DEGREE {N_DEGREE}")
 
-tokenizer = Tokenizer()
+tokenizer = Tokenizer(MT5Tokenizer.from_pretrained('google/mt5-small'))
 pipeline = Pipeline(tokenizer)
 
 dataset = pipeline.dataset_load()
@@ -19,9 +20,9 @@ model = pipeline.model_creation(
     # None (for personal model), 'bert', 'mt5'
     type='mt5',
     # only with pretrained:
-    #       'bert-base-multilingual-uncased'          <- bert
-    #       'distilbert-base-multilingual-uncased'    <- bert
-    #       'google/mt5-small'                      <- mt5
+    #       'bert-base-multilingual-uncased'            <- bert
+    #       'distilbert-base-multilingual-uncased'      <- bert
+    #       'google/mt5-small'                          <- mt5
     pretrained_type='google/mt5-small',
     enc_layers=ENC_LAYERS,
     enc_heads=ENC_HEADS,
