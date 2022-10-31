@@ -28,6 +28,7 @@ root.addHandler(handler)
 class Pipeline:
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
+
     def dataset_load(self):
         #
         # Downloading dataset
@@ -55,7 +56,8 @@ class Pipeline:
 
         if not serializer.exists():
             logging.info("Preprocessing file not found, executing preprocessing...")
-            preprocessor = Preprocessor(dataset=dataset, tokenizer=self.tokenizer, max_length=MAX_LENGTH, chunks=N_DEGREE,
+            preprocessor = Preprocessor(dataset=dataset, tokenizer=self.tokenizer, max_length=MAX_LENGTH,
+                                        chunks=N_DEGREE,
                                         limit=limit, device=device)
             # executing preprocessing
             base_lang_config, zeroshot_lang_config = preprocessor.execute(BASE_LANG_CONFIG, ZEROSHOT_LANG_CONFIG)
@@ -124,7 +126,7 @@ class Pipeline:
         #
         # Model training
         #
-        trainer = Trainer(model, self.tokenizer.pad_index, learning_rate=learning_rate, batch_size=batch_size, clip=clip,
+        trainer = Trainer(model, learning_rate=learning_rate, batch_size=batch_size, clip=clip,
                           device=device, limit_eval=limit_eval)
         logging.info("Start model training")
         trainer(structured_dataset.baseset.train.tokens_id, epochs=epochs,
@@ -133,7 +135,8 @@ class Pipeline:
         return trainer
 
     def create_translator(self, model, chunks=N_DEGREE, device=DEVICE):
-        return TransformerTranslator(model, self.tokenizer, self.tokenizer, MAX_LENGTH, chunks, device, limit_bleu=LIMIT_BLEU)
+        return TransformerTranslator(model, self.tokenizer, self.tokenizer, MAX_LENGTH, chunks, device,
+                                     limit_bleu=LIMIT_BLEU)
 
     def translate(self, translator, structured_dataset: StructuredDataset, limit=6):
         #

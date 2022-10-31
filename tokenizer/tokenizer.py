@@ -5,7 +5,6 @@ class Tokenizer:
         self.vocab_size = len(self.instance)
         self.max_length = max_length
         self.device = device
-        self.pad_index = self.convert_tokens_to_ids([self.instance.pad_token])[0]
 
     def __call__(self, src):
         """

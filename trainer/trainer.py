@@ -10,13 +10,12 @@ from torchmetrics import Accuracy
 class Trainer:
     """This class create the instance able to train a trnsformer model for a NMT task."""
 
-    def __init__(self, model: nn.Module, trg_pad_idx: int, learning_rate: float = 0.0005, batch_size: int = 32,
+    def __init__(self, model: nn.Module, learning_rate: float = 0.0005, batch_size: int = 32,
                  clip: int = 1, device='cpu', limit_eval=None, ) -> None:
         """Trainer constructor
 
         Args:
             model (nn.Module): Transformer model that will be trained.
-            trg_pad_idx (int): Index that represent padding tag on decoder tokenizer.
             learning_rate (float, optional): Learning rate used from Adam optimizer.
             batch_size (int): Batch size to create minibatches.
             clip (int, optional): Parameter used to clip weights norm each minibatch training.
@@ -25,7 +24,7 @@ class Trainer:
         self.clip = clip
         self.batch_size = batch_size
         self.optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-        self.criterion = nn.CrossEntropyLoss(ignore_index=trg_pad_idx)
+        self.criterion = nn.CrossEntropyLoss()
         self.accuracy = Accuracy().to(device)
         self.device = device
         self.limit_eval = limit_eval

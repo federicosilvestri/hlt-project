@@ -113,7 +113,7 @@ class GridSearch:
 
             model = Transformer(enc, dec, device, MODEL_DIR, MODEL_FILE_NAME).to(device)
 
-            trainer = Trainer(model, self.tokenizer.pad_index, LEARNING_RATE, clip=CLIP, device=device,
+            trainer = Trainer(model, LEARNING_RATE, clip=CLIP, device=device,
                               limit_eval=LIMIT_EVAL)
             translator = pipeline.create_translator(model, device=device)
             trainer(
