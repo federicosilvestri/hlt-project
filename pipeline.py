@@ -3,6 +3,7 @@ from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
 from model.distilbert_encoder import DistilBERTEncoder
 from model.mt5_encoder import MT5Encoder
+from model.xlmroberta_encoder import XLMRobertaEncoder
 from translate.transformer_translator import TransformerTranslator
 from trainer.trainer import Trainer
 from model.transformer import Transformer
@@ -101,6 +102,16 @@ class Pipeline:
                               )
         elif type == 'bert':
             enc = BERTEncoder(self.tokenizer.vocab_size,
+                              hid_dim,
+                              enc_layers,
+                              enc_heads,
+                              ENC_PF_DIM,
+                              ENC_DROPOUT,
+                              device,
+                              type=pretrained_type
+                              )
+        elif type == 'xlmroberta':
+            enc = XLMRobertaEncoder(self.tokenizer.vocab_size,
                               hid_dim,
                               enc_layers,
                               enc_heads,

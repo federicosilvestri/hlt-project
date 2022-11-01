@@ -11,20 +11,22 @@ from model.distilbert_encoder import DistilBERTEncoder
 from model.encoder import Encoder
 from model.mt5_encoder import MT5Encoder
 from model.transformer import Transformer
+from model.xlmroberta_encoder import XLMRobertaEncoder
 from tokenizer import Tokenizer
 from trainer.trainer import Trainer
 from pipeline import Pipeline
 import logging as lg
 
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
-from transformers import BertTokenizer, DistilBertTokenizer, MT5Tokenizer
+from transformers import BertTokenizer, DistilBertTokenizer, MT5Tokenizer, XLMRobertaTokenizer
 
 
 class ModelType:
     PERSONAL = 0
     BERT = 1
     DISTILBERT = 2
-    MT5 = 3
+    XLMROBERTA = 3
+    MT5 = 4
 
 
 class Hyperparameters:
@@ -33,6 +35,7 @@ class Hyperparameters:
         (ModelType.MT5, 'google/mt5-small'),
         (ModelType.BERT, 'bert-base-multilingual-uncased'),
         (ModelType.DISTILBERT, 'distilbert-base-multilingual-cased'),
+        (ModelType.XLMROBERTA, 'xlm-roberta-base'),
         (ModelType.PERSONAL, None),
     ]
     ENC_LAYERS = [3]
@@ -89,6 +92,15 @@ class GridSearch:
                                   type=ENC_MODEL_TYPE)
             elif ENC_TYPE == ModelType.DISTILBERT:
                 enc = DistilBERTEncoder(INPUT_DIM,
+                                  HID_DIM,
+                                  ENC_LAYERS,
+                                  ENC_HEADS,
+                                  ENC_PF_DIM,
+                                  ENC_DROPOUT,
+                                  device,
+                                  type=ENC_MODEL_TYPE)
+            elif ENC_TYPE == ModelType.XLMROBERTA:
+                enc = XLMRobertaEncoder(INPUT_DIM,
                                   HID_DIM,
                                   ENC_LAYERS,
                                   ENC_HEADS,
