@@ -7,6 +7,7 @@ from config import *
 from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
 from model.decoder import Decoder
+from model.distilbert_encoder import DistilBERTEncoder
 from model.encoder import Encoder
 from model.mt5_encoder import MT5Encoder
 from model.transformer import Transformer
@@ -16,13 +17,14 @@ from pipeline import Pipeline
 import logging as lg
 
 from trainer.trainer_callbacks import print_epoch_loss_accuracy
-from transformers import BertTokenizer
+from transformers import BertTokenizer, DistilBertTokenizer, MT5Tokenizer
 
 
 class ModelType:
     PERSONAL = 0
     BERT = 1
-    MT5 = 2
+    DISTILBERT = 2
+    MT5 = 3
 
 
 class Hyperparameters:
@@ -30,7 +32,7 @@ class Hyperparameters:
     ENC_TYPES = [
         (ModelType.MT5, 'google/mt5-small'),
         (ModelType.BERT, 'bert-base-multilingual-uncased'),
-        (ModelType.BERT, 'distilbert-base-multilingual-cased'),
+        (ModelType.DISTILBERT, 'distilbert-base-multilingual-cased'),
         (ModelType.PERSONAL, None),
     ]
     ENC_LAYERS = [3]
@@ -78,6 +80,15 @@ class GridSearch:
             ENC_TYPE, ENC_MODEL_TYPE = ENC_TYPES
             if ENC_TYPE == ModelType.BERT:
                 enc = BERTEncoder(INPUT_DIM,
+                                  HID_DIM,
+                                  ENC_LAYERS,
+                                  ENC_HEADS,
+                                  ENC_PF_DIM,
+                                  ENC_DROPOUT,
+                                  device,
+                                  type=ENC_MODEL_TYPE)
+            elif ENC_TYPE == ModelType.DISTILBERT:
+                enc = DistilBERTEncoder(INPUT_DIM,
                                   HID_DIM,
                                   ENC_LAYERS,
                                   ENC_HEADS,

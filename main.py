@@ -17,11 +17,11 @@ structured_dataset = pipeline.preprocess(dataset)
 print(f"Structured dataset sizes\n{structured_dataset.sizes()}")
 
 model = pipeline.model_creation(
-    # None (for personal model), 'bert', 'mt5'
+    # None (for personal model), 'bert', 'distilbert', 'mt5'
     type='mt5',
     # only with pretrained:
     #       'bert-base-multilingual-uncased'            <- bert
-    #       'distilbert-base-multilingual-uncased'      <- bert
+    #       'distilbert-base-multilingual-uncased'      <- distilbert
     #       'google/mt5-small'                          <- mt5
     pretrained_type='google/mt5-small',
     enc_layers=ENC_LAYERS,

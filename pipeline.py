@@ -1,8 +1,8 @@
 from data.serializer import SDSerializer
 from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
+from model.distilbert_encoder import DistilBERTEncoder
 from model.mt5_encoder import MT5Encoder
-from trainer.trainer_callbacks import print_epoch_loss_accuracy
 from translate.transformer_translator import TransformerTranslator
 from trainer.trainer import Trainer
 from model.transformer import Transformer
@@ -89,6 +89,16 @@ class Pipeline:
                              device,
                              type=pretrained_type
                              )
+        elif type == 'distilbert':
+            enc = DistilBERTEncoder(self.tokenizer.vocab_size,
+                              hid_dim,
+                              enc_layers,
+                              enc_heads,
+                              ENC_PF_DIM,
+                              ENC_DROPOUT,
+                              device,
+                              type=pretrained_type
+                              )
         elif type == 'bert':
             enc = BERTEncoder(self.tokenizer.vocab_size,
                               hid_dim,
