@@ -1,31 +1,14 @@
-from concurrent.futures import ThreadPoolExecutor
-from functools import reduce
 import typing as tp
-import numpy as np
 from data import Dataset
-from utils import search_strategy
 
 
 class Preprocessor:
     def __init__(
-            self, dataset: Dataset, tokenizer, device, max_length: int = 100, limit: tp.Optional[int] = None,
-            chunks: int = None
+            self, dataset: Dataset, limit: tp.Optional[int] = None,
     ):
         # we need to implement the search strategy
-        self._device_: str = device
         self._dataset_ = dataset
-        self._max_length_: int = max_length
         self._limit_ = limit if limit is not None else dataset.size
-        self.chunks = chunks
-        self._tokenizer_ = tokenizer
-
-    def _preprocessing_(self, train_strings):
-        train_data = []
-        for src, trg in train_strings:
-            src = self._tokenizer_(src)
-            trg = self._tokenizer_(trg)
-            train_data.append((src, trg))
-        return train_data
 
     def _wrap_preprocessing_by_lang_(self, langs):
         def replace_lang(lang, k, v):
@@ -37,17 +20,10 @@ class Preprocessor:
                                  (f"[2{trg}] {replace_lang(src, k, v)}", f"{replace_lang(trg, k, v)}")
                                  for src, trg in langs
                              ]
-        if self.chunks is not None and self.chunks > 1:
-            train_strings_chunks = np.array_split(train_strings, self.chunks)
-            with ThreadPoolExecutor() as executor:
-                futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings_chunks]
-                train_data = reduce(lambda x, y: x + y, [future.result() for future in futures])
-        else:
-            train_data = self._preprocessing_(train_strings)
 
-        return train_strings, train_data
+        return train_strings
 
-    def execute(self, base_lang_config, zeroshot_lang_cnfig):
+    def execute(self, base_lang_config, zeroshot_lang_config):
         base_data = self._wrap_preprocessing_by_lang_(base_lang_config)
-        zeroshot_data = self._wrap_preprocessing_by_lang_(zeroshot_lang_cnfig)
+        zeroshot_data = self._wrap_preprocessing_by_lang_(zeroshot_lang_config)
         return base_data, zeroshot_data

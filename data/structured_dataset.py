@@ -3,6 +3,9 @@ from typing import List
 from torchmetrics import SacreBLEUScore
 from torchtext.data import bleu_score
 import logging as lg
+from concurrent.futures import ThreadPoolExecutor
+from functools import reduce
+import numpy as np
 
 
 class TranslatedSet:
@@ -51,15 +54,44 @@ class TranslatedSet:
 
 
 class StructuredData:
-    def __init__(self, labels, tokens_id):
+    def __init__(self, labels, tokenizer, chunks=1, log_name=''):
         self.labels = labels
-        self.tokens_id = tokens_id
+        self._tokenizer_ = tokenizer
+        self.chunks = chunks
+        self.log_name = log_name
 
+        self.__tokens_id__ = None
         self.loss = None
         self.accuracy = None
         self.translated_set: TranslatedSet = None
         self.__bleu__ = None
         self.__sacrebleu__ = None
+
+    @property
+    def tokens_id(self):
+        if self.__tokens_id__ is None:
+            lg.info(f'{self.log_name} preprocessing of {len(self.labels)} labels...')
+            self.__tokens_id__ = self._tokenize_labels_(self.labels)
+            lg.info(f'{self.log_name} preprocessed')
+        return self.__tokens_id__
+
+    def _preprocessing_(self, train_strings):
+        train_data = []
+        for src, trg in train_strings:
+            src = self._tokenizer_(src)
+            trg = self._tokenizer_(trg)
+            train_data.append((src, trg))
+        return train_data
+
+    def _tokenize_labels_(self, train_strings):
+        if self.chunks is not None and self.chunks > 1:
+            train_strings_chunks = np.array_split(train_strings, self.chunks)
+            with ThreadPoolExecutor() as executor:
+                futures = [executor.submit(self._preprocessing_, train_str) for train_str in train_strings_chunks]
+                train_data = reduce(lambda x, y: x + y, [future.result() for future in futures])
+        else:
+            train_data = self._preprocessing_(train_strings)
+        return train_data
 
     @property
     def bleu(self) -> float:
@@ -71,12 +103,10 @@ class StructuredData:
 
 
 class TRTS:
-    def __init__(self, trts, thresh_perd):
-        labels, tokens_id = trts
+    def __init__(self, labels, thresh_perd, tokenizer, chunks=1, log_name=''):
         tr_labels, ts_labels = self.__holdout__(labels, thresh_perd)
-        tr_tokens_id, ts_tokens_id = self.__holdout__(tokens_id, thresh_perd)
-        self.train = StructuredData(tr_labels, tr_tokens_id)
-        self.test = StructuredData(ts_labels, ts_tokens_id)
+        self.train = StructuredData(tr_labels, tokenizer, chunks, f'{log_name}_train')
+        self.test = StructuredData(ts_labels, tokenizer, chunks, f'{log_name}_test')
 
     def __holdout__(self, data, thresh_perd):
         train_data_size = len(data)
@@ -87,9 +117,9 @@ class TRTS:
 
 
 class StructuredDataset:
-    def __init__(self, baseset, zeroshotset, thresh_perd):
-        self.__baseset__ = TRTS(baseset, thresh_perd)
-        self.__zeroshotset__ = TRTS(zeroshotset, thresh_perd)
+    def __init__(self, baseset, zeroshotset, thresh_perd, tokenizer, chunks=1):
+        self.__baseset__ = TRTS(baseset, thresh_perd, tokenizer, chunks, 'baseset')
+        self.__zeroshotset__ = TRTS(zeroshotset, thresh_perd, tokenizer, chunks, 'zeroshotset')
 
     @property
     def baseset(self):
@@ -145,15 +175,16 @@ class StructuredDataset:
         lg.info(f"Stop baseset test create_translatedset evaluation")
         if zeroshot:
             lg.info(f"Start zeroshot train create_translatedset evaluation")
-            self.__zeroshotset__.train.translated_set = translator.create_translatedset(self.__zeroshotset__.train.labels)
+            self.__zeroshotset__.train.translated_set = translator.create_translatedset(
+                self.__zeroshotset__.train.labels)
             lg.info(f"Stop zeroshot train create_translatedset evaluation")
             lg.info(f"Start zeroshot test create_translatedset evaluation")
             self.__zeroshotset__.test.translated_set = translator.create_translatedset(self.__zeroshotset__.test.labels)
             lg.info(f"Stop zeroshot test create_translatedset evaluation")
 
     def sizes(self):
-        return f"baseset\n\ttrain: {len(self.baseset.train.tokens_id)}\n\ttest: {len(self.baseset.test.tokens_id)}" \
-               f"\nzeroshot\n\ttrain: {len(self.zeroshotset.train.tokens_id)}\n\ttest: {len(self.zeroshotset.test.tokens_id)}"
+        return f"baseset\n\ttrain: {len(self.baseset.train.labels)}\n\ttest: {len(self.baseset.test.labels)}" \
+               f"\nzeroshot\n\ttrain: {len(self.zeroshotset.train.labels)}\n\ttest: {len(self.zeroshotset.test.labels)}"
 
     def to_dict(self, trainer, translator):
         lg.info(f"Start baseset train loss evaluation")
