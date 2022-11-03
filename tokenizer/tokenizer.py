@@ -33,3 +33,10 @@ class Tokenizer:
         String to tokens
         """
         return self.instance.tokenize(src)
+    @property
+    def bos_token(self):
+        return self.instance.bos_token
+
+    @property
+    def eos_token(self):
+        return self.instance.eos_token

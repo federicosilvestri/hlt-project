@@ -14,8 +14,8 @@ class TransformerTranslator:
     def __init__(
             self,
             model: nn.Module,
-            tokenizer_encoder: AutoTokenizer,
-            tokenizer_decoder: AutoTokenizer,
+            tokenizer_encoder,
+            tokenizer_decoder,
             max_length: int = 100,
             chunks: int = None,
             device: str = 'cpu',
@@ -25,8 +25,8 @@ class TransformerTranslator:
 
         Args:
             model (nn.Module): Model trained that is able to produce a word given a source cotext and a target sentence.
-            tokenizer_encoder (AutoTokenizer): Encoder tokenizer.
-            tokenizer_decoder (AutoTokenizer): Decoder tokenizer.
+            tokenizer_encoder (Tokenizer): Encoder tokenizer.
+            tokenizer_decoder (Tokenizer): Decoder tokenizer.
             max_length (int, optional): Max number of tokens of a translated sentence.
             device (str, optional): Accelerator used to translate data.
         """
@@ -50,7 +50,7 @@ class TransformerTranslator:
         """
         src_indexes = self.tokenizer_encoder(src_sentence)
         src_tensor = src_indexes.to(self.device)
-        trg_indexes = self.tokenizer_decoder.convert_tokens_to_ids(["[CLS]"])
+        trg_indexes = self.tokenizer_decoder.convert_tokens_to_ids([self.tokenizer_decoder.bos_token])
         with torch.no_grad():
             enc_src = self.model.encoder(src_tensor)
         for _ in range(self.max_length):
@@ -60,7 +60,7 @@ class TransformerTranslator:
             pred_index = torch.argmax(output[0, -1], dim=-1).item()
             trg_indexes.append(pred_index)
             trg_tokens = self.tokenizer_decoder.convert_ids_to_tokens(trg_indexes)
-            if trg_tokens[-1] == "[SEP]":
+            if trg_tokens[-1] == self.tokenizer_decoder.eos_token:
                 break
         trg_tokens = trg_tokens[1:-1]
         res_sent = self.tokenizer_decoder.convert_tokens_to_string(trg_tokens)
