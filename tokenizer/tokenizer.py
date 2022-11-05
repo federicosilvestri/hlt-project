@@ -6,6 +6,12 @@ class Tokenizer:
         self.max_length = max_length
         self.device = device
 
+        special_ids = self('')[0]
+        self.bos_token_id = special_ids[0].item()
+        self.eos_token_id = special_ids[1].item()
+        self.bos_token = self.convert_ids_to_tokens(self.bos_token_id)
+        self.eos_token = self.convert_ids_to_tokens(self.eos_token_id)
+
     def __call__(self, src):
         """
         String to ids
@@ -33,10 +39,3 @@ class Tokenizer:
         String to tokens
         """
         return self.instance.tokenize(src)
-    @property
-    def bos_token(self):
-        return self.instance.bos_token
-
-    @property
-    def eos_token(self):
-        return self.instance.eos_token
