@@ -15,13 +15,13 @@ class MT5Encoder(nn.Module):
                  type='google/mt5-small'
                  ):
         super().__init__()
-        mt5_config = MT5Config.from_pretrained(type)
-        mt5_config.d_model = hid_dim
-        mt5_config.num_layers = n_layers
-        mt5_config.num_heads = n_heads
-        mt5_config.d_ff = pf_dim
-        mt5_config.dropout_rate = dropout
-        self.mt5 = MT5EncoderModel(mt5_config).to(device)
+        config = MT5Config.from_pretrained(type)
+        config.d_model = hid_dim
+        config.num_layers = n_layers
+        config.num_heads = n_heads
+        config.d_ff = pf_dim
+        config.dropout_rate = dropout
+        self.mt5 = MT5EncoderModel(config).to(device)
         self.mt5.resize_token_embeddings(tokenizer_dim)
         self.device = device
 

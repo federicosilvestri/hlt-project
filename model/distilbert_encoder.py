@@ -15,13 +15,13 @@ class DistilBERTEncoder(nn.Module):
                  type='distilbert-base-multilingual-uncased'
                  ):
         super().__init__()
-        bert_config = DistilBertConfig.from_pretrained(type)
-        bert_config.dim = hid_dim
-        bert_config.n_layers = n_layers
-        bert_config.n_heads = n_heads
-        bert_config.hidden_dim = pf_dim
-        bert_config.dropout = dropout
-        self.bert = DistilBertModel(bert_config).to(device)
+        config = DistilBertConfig.from_pretrained(type)
+        config.dim = hid_dim
+        config.n_layers = n_layers
+        config.n_heads = n_heads
+        config.hidden_dim = pf_dim
+        config.dropout = dropout
+        self.bert = DistilBertModel(config).to(device)
         self.bert.resize_token_embeddings(tokenizer_dim)
         self.device = device
 

@@ -15,13 +15,13 @@ class BERTEncoder(nn.Module):
                  type='bert-base-multilingual-uncased'
                  ):
         super().__init__()
-        bert_config = BertConfig.from_pretrained(type)
-        bert_config.hidden_size = hid_dim
-        bert_config.num_hidden_layers = n_layers
-        bert_config.num_attention_heads = n_heads
-        bert_config.intermediate_size = pf_dim
-        bert_config.hidden_dropout_prob = dropout
-        self.bert = BertModel(bert_config).to(device)
+        config = BertConfig.from_pretrained(type)
+        config.hidden_size = hid_dim
+        config.num_hidden_layers = n_layers
+        config.num_attention_heads = n_heads
+        config.intermediate_size = pf_dim
+        config.hidden_dropout_prob = dropout
+        self.bert = BertModel(config).to(device)
         self.bert.resize_token_embeddings(tokenizer_dim)
         self.device = device
 
