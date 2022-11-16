@@ -47,12 +47,16 @@ class Pipeline:
         logging.info("Loading dataset")
         return Dataset(dataset_downloader.downloaded_file, cut=DATASET_CUT)
 
-    def preprocess(self, dataset, limit=None, device=DEVICE, chunks=N_DEGREE):
+    def preprocess(self, dataset, tokenizer_type=None, limit=None, chunks=N_DEGREE):
         #
         # Execute preprocessing
         #
+        if tokenizer_type is not None:
+            filename = f'{tokenizer_type}_{PREPROCESSOR_FILE_NAME}'
+        else:
+            filename = PREPROCESSOR_FILE_NAME
         serializer = SDSerializer(
-            file_name=PREPROCESSOR_FILE_NAME, file_dir=PREPROCESSOR_DIR
+            file_name=filename, file_dir=PREPROCESSOR_DIR
         )
 
         if not serializer.exists():

@@ -4,7 +4,6 @@ import json
 from threading import Thread
 
 from config import *
-from data.structured_dataset import StructuredDataset
 from model.bert_encoder import BERTEncoder
 from model.decoder import Decoder
 from model.distilbert_encoder import DistilBERTEncoder
@@ -69,9 +68,8 @@ class GridSearch:
                 json.dump(gs_dict, fp)
             self.gs_dicts.append(gs_dict)
 
-    def __train_chunk(self, n_chunk, structured_dataset: StructuredDataset, epochs, pipeline, hyperparams):
+    def __train_chunk(self, n_chunk, dataset, epochs, pipeline, hyperparams):
         i = 0
-        print_callback = print_epoch_loss_accuracy(structured_dataset)
         device = f'{DEVICE}:{n_chunk}' if DEVICE == 'cuda' else DEVICE
         for HID_DIM, ENC_TYPES, ENC_LAYERS, DEC_LAYERS, ENC_PF_DIM, DEC_PF_DIM, LEARNING_RATE, CLIP in hyperparams:
             i += 1
@@ -136,6 +134,10 @@ class GridSearch:
 
             model = Transformer(enc, dec, device, MODEL_DIR, MODEL_FILE_NAME).to(device)
 
+            structured_dataset = pipeline.preprocess(dataset, ENC_MODEL_TYPE.replace('/', '_'))
+            lg.info(f"Structured dataset sizes\n{structured_dataset.sizes()}")
+            print_callback = print_epoch_loss_accuracy(structured_dataset)
+
             trainer = Trainer(model, LEARNING_RATE, clip=CLIP, device=device,
                               limit_eval=LIMIT_EVAL)
             translator = pipeline.create_translator(model, device=device)
@@ -166,8 +168,6 @@ class GridSearch:
     def train(self, epochs=10):
         pipeline = Pipeline(self.tokenizer)
         dataset = pipeline.dataset_load()
-        structured_dataset = pipeline.preprocess(dataset)
-        lg.info(f"Structured dataset sizes\n{structured_dataset.sizes()}")
         hyperparams = list(product(
             self.hyperparameters.HID_DIM,
             self.hyperparameters.ENC_TYPES,
@@ -180,7 +180,7 @@ class GridSearch:
         ))
         lg.info(f"CHUNKS {self.n_chunks} for {len(hyperparams)} configurations")
         if self.n_chunks == 1:
-            self.__train_chunk(0, structured_dataset, epochs, pipeline, hyperparams)
+            self.__train_chunk(0, dataset, epochs, pipeline, hyperparams)
         else:
             hyperparams_chunks = [[] for _ in range(self.n_chunks)]
             for i, hyperparam in enumerate(hyperparams):
@@ -189,7 +189,7 @@ class GridSearch:
             for n_chunk, hyperparams_chunk in enumerate(hyperparams_chunks):
                 thread = Thread(
                     target=self.__train_chunk,
-                    args=(n_chunk, structured_dataset, epochs, pipeline, hyperparams_chunk)
+                    args=(n_chunk, dataset, epochs, pipeline, hyperparams_chunk)
                 )
                 thread.start()
                 threads.append(thread)
